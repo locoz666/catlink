@@ -9,6 +9,7 @@ from ..binary_sensor import CatlinkBinarySensorEntity
 from ..button import CatlinkButtonEntity
 from ..const import _LOGGER, DOMAIN, SUPPORTED_DOMAINS
 from ..modules.feeder_device import FeederDevice
+from ..modules.fresh2_feeder_device import Fresh2FeederDevice
 from ..modules.litterbox import LitterBox
 from ..modules.pure2_device import Pure2Device
 from ..modules.scooper_device import ScooperDevice
@@ -60,6 +61,8 @@ class DevicesCoordinator(DataUpdateCoordinator):
                         dvc = LitterBox(dat, self, additional_config)
                     case "FEEDER":
                         dvc = FeederDevice(dat, self, additional_config)
+                    case "FEEDER_PRO":  # Fresh2 feeder series (fresh2-standard, fresh2-pro)
+                        dvc = Fresh2FeederDevice(dat, self, additional_config)
                     case "PUREPRO":  # Pure2 water fountain series (Pure2, Pure2 Pro, Pure2 UV)
                         dvc = Pure2Device(dat, self, additional_config)
                     case _:
