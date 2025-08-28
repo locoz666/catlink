@@ -171,13 +171,16 @@ class Account:
         if not self.token:
             if not await self.async_login():
                 return []
-        api = "token/device/union/list/sorted"
-        rsp = await self.request(api, {"type": "NONE"})
+        api = "token/device/union/sortedList"
+        rsp = await self.request(api)
         eno = rsp.get("returnCode", 0)
         if eno == 1002:  # Illegal token
             if await self.async_login():
-                rsp = await self.request(api, {"type": "NONE"})
-        dls = rsp.get("data", {}).get(CONF_DEVICES) or []
+                rsp = await self.request(api)
+        # New API returns data as a list directly, not nested under 'devices'
+        dls = rsp.get("data") or []
+        if not isinstance(dls, list):
+            dls = []
         if not dls:
             _LOGGER.warning("Got devices for %s failed: %s", self.phone, rsp)
         return dls
