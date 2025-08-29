@@ -42,9 +42,6 @@ class CatlinkEntity(CoordinatorEntity):
         if device.mac:
             device_info["connections"] = {("mac", device.mac)}
         
-        # If config entry exists, add configuration URL
-        if hasattr(device.coordinator, 'config_entry') and device.coordinator.config_entry:
-            device_info["configuration_url"] = "https://app.catlinks.cn"
             
         self._attr_device_info = DeviceInfo(**device_info)
         
