@@ -6,5 +6,7 @@
   "issue_tracker": "https://github.com/hasscc/catlink/issues",
   "requirements": [],
   "codeowners": ["@milosljubenovic"],
-  "iot_class": "cloud_polling"
+  "iot_class": "cloud_polling",
+  "config_flow": true,
+  "loggers": ["custom_components.catlink"]
 }

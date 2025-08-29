@@ -3,20 +3,30 @@
 import asyncio
 
 from homeassistant.components.select import DOMAIN as ENTITY_DOMAIN, SelectEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .entitites import CatlinkEntity
 from .helpers import Helper
 from .modules.device import Device
 
-async_setup_entry = Helper.async_setup_entry
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up CatLink selects from a config entry."""
+    hass.data[DOMAIN]["add_entities"][ENTITY_DOMAIN] = async_add_entities
+    await Helper.async_setup_accounts(hass, ENTITY_DOMAIN)
 
 
 async def async_setup_platform(
     hass: HomeAssistant, config, async_add_entities, discovery_info=None
 ):
-    """Set up the Catlink select platform."""
+    """Set up the Catlink select platform via YAML configuration."""
     hass.data[DOMAIN]["add_entities"][ENTITY_DOMAIN] = async_add_entities
     await Helper.async_setup_accounts(hass, ENTITY_DOMAIN)
 

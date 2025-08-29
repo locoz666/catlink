@@ -32,19 +32,32 @@ class DevicesCoordinator(DataUpdateCoordinator):
         )
         self.account = account
         self._subs = {}
-        self.additional_config = self.hass.data[DOMAIN]["config"].get(CONF_DEVICES, {})
+        self.config_entry = None  # Will be set by __init__.py
+        
+        # Get device-specific configuration from YAML config
+        yaml_config = self.hass.data[DOMAIN]["config"].get(CONF_DEVICES, {})
         self.additional_config = [
-            AdditionalDeviceConfig(**cfg) for cfg in self.additional_config
+            AdditionalDeviceConfig(**cfg) for cfg in yaml_config
         ]
 
     async def _async_update_data(self) -> dict:
         """Update data via API."""
         dls = await self.account.get_devices()
         for dat in dls:
+            # Get device-specific config from YAML or config entry
             additional_config = next(
                 (cfg for cfg in self.additional_config if cfg.mac == dat.get("mac")),
                 None,
             )
+            
+            # If not found and has config entry, create default config from config entry
+            if not additional_config and self.config_entry:
+                cfg_data = {**self.config_entry.data, **self.config_entry.options}
+                additional_config = AdditionalDeviceConfig(
+                    mac=dat.get("mac", ""),
+                    empty_weight=cfg_data.get("empty_weight", 0.0),
+                    max_samples_litter=cfg_data.get("max_samples_litter", 24),
+                )
             did = dat.get("id")
             if not did:
                 continue
@@ -68,6 +81,14 @@ class DevicesCoordinator(DataUpdateCoordinator):
                     case _:
                         dvc = Device(dat, self)
                 self.hass.data[DOMAIN][CONF_DEVICES][did] = dvc
+                _LOGGER.debug(
+                    "Created device '%s' (Type: %s, ID: %s, MAC: %s) with config: %s", 
+                    dvc.name, 
+                    dvc.type, 
+                    dvc.id, 
+                    dvc.mac,
+                    additional_config
+                )
             await dvc.async_init()
             for d in SUPPORTED_DOMAINS:
                 await self.update_hass_entities(d, dvc)

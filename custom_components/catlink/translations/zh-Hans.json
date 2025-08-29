@@ -1,0 +1,96 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "CatLink 账号设置",
+        "description": "请输入您的 CatLink 账号信息",
+        "data": {
+          "phone": "手机号",
+          "phone_iac": "国家代码",
+          "password": "密码",
+          "server_region": "服务器地区"
+        },
+        "data_description": {
+          "phone": "您的 CatLink 账号手机号码",
+          "phone_iac": "国际区号（例如：中国为 86）",
+          "password": "您的 CatLink 账号密码",
+          "server_region": "选择距离您最近的服务器地区"
+        }
+      },
+      "settings": {
+        "title": "系统设置",
+        "description": "配置更新间隔和语言偏好",
+        "data": {
+          "scan_interval_seconds": "更新间隔（秒）",
+          "language": "语言",
+          "configure_devices": "配置设备专用设置"
+        },
+        "data_description": {
+          "scan_interval_seconds": "设备数据更新频率（最低5秒，无上限）",
+          "language": "集成界面语言",
+          "configure_devices": "启用后可配置设备专用参数，如空猫砂盆重量等"
+        }
+      },
+      "device_config": {
+        "title": "设备配置",
+        "description": "配置设备专用参数",
+        "data": {
+          "empty_weight": "空猫砂盆重量（公斤）",
+          "max_samples_litter": "猫砂重量采样数"
+        },
+        "data_description": {
+          "empty_weight": "空猫砂盆的重量，用于精确计算猫砂剩余量",
+          "max_samples_litter": "用于判断猫是否在内的重量采样数量（1-100）"
+        }
+      },
+      "confirm": {
+        "title": "确认配置",
+        "description": "请检查您的配置信息：\n\n{config_summary}\n\n点击提交以保存此配置。"
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接到 CatLink 服务器，请检查网络连接和服务器地区选择。",
+      "invalid_auth": "手机号或密码错误，请检查您的登录凭据。",
+      "unknown": "发生未知错误，请重试。"
+    },
+    "abort": {
+      "already_configured": "此账号已经配置过了，每个手机号只能配置一次。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "CatLink 选项",
+        "description": "更新您的 CatLink 集成设置",
+        "data": {
+          "scan_interval_seconds": "更新间隔（秒）",
+          "language": "语言",
+          "empty_weight": "空猫砂盆重量（公斤）",
+          "max_samples_litter": "猫砂重量采样数"
+        },
+        "data_description": {
+          "scan_interval_seconds": "设备数据更新频率（最低5秒，无上限）",
+          "language": "集成界面语言",
+          "empty_weight": "空猫砂盆重量，用于精确计算",
+          "max_samples_litter": "用于判断猫是否存在的采样数量"
+        }
+      }
+    }
+  },
+  "selector": {
+    "server_region": {
+      "options": {
+        "global": "国际",
+        "china": "中国",
+        "euroamerica": "欧美",
+        "singapore": "新加坡"
+      }
+    },
+    "language": {
+      "options": {
+        "zh_CN": "简体中文",
+        "en_GB": "English"
+      }
+    }
+  }
+}

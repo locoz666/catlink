@@ -3,21 +3,44 @@
 import voluptuous as vol
 
 from homeassistant.components.sensor import DOMAIN as ENTITY_DOMAIN, SensorEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .entitites import CatlinkEntity
 from .helpers import Helper
 
-async_setup_entry = Helper.async_setup_entry
 async_setup_accounts = Helper.async_setup_accounts
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up CatLink sensors from a config entry."""
+    hass.data[DOMAIN]["add_entities"][ENTITY_DOMAIN] = async_add_entities
+    await async_setup_accounts(hass, ENTITY_DOMAIN)
+
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        "request_api",
+        {
+            vol.Required("api"): cv.string,
+            vol.Optional("params", default={}): vol.Any(dict, None),
+            vol.Optional("method", default="GET"): cv.string,
+            vol.Optional("throw", default=True): cv.boolean,
+        },
+        "async_request_api",
+    )
 
 
 async def async_setup_platform(
     hass: HomeAssistant, config, async_add_entities, discovery_info=None
 ):
-    """Set up the Catlink sensor platform."""
+    """Set up the Catlink sensor platform via YAML configuration."""
     hass.data[DOMAIN]["add_entities"][ENTITY_DOMAIN] = async_add_entities
     await async_setup_accounts(hass, ENTITY_DOMAIN)
 

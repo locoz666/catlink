@@ -52,8 +52,6 @@ class Helper:
     async def async_setup_entry(
         cls, hass: HomeAssistant, config_entry, async_add_entities
     ) -> None:
-        """Set up the Catlink platform."""
-        cfg = {**config_entry.data, **config_entry.options}
-        await cls.async_setup_platform(
-            hass, cfg, cls.async_setup_platform, async_add_entities
-        )
+        """Set up the Catlink platform from config entry."""
+        # This method is no longer needed as platform files directly implement async_setup_entry
+        pass

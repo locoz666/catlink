@@ -1,0 +1,80 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "CatLink Account Setup",
+        "description": "Enter your CatLink account information",
+        "data": {
+          "phone": "Phone Number",
+          "phone_iac": "Country Code",
+          "password": "Password",
+          "server_region": "Server Region"
+        },
+        "data_description": {
+          "phone": "Your CatLink account phone number",
+          "phone_iac": "International calling code (e.g., 86 for China)",
+          "password": "Your CatLink account password",
+          "server_region": "Select the server region closest to you"
+        }
+      },
+      "settings": {
+        "title": "System Settings",
+        "description": "Configure update interval and language preferences",
+        "data": {
+          "scan_interval_seconds": "Update Interval (seconds)",
+          "language": "Language", 
+          "configure_devices": "Configure device-specific settings"
+        },
+        "data_description": {
+          "scan_interval_seconds": "How often to update device data (minimum 5 seconds, no maximum limit)",
+          "language": "Interface language for the integration",
+          "configure_devices": "Enable to configure device-specific parameters like empty litter box weight"
+        }
+      },
+      "device_config": {
+        "title": "Device Configuration",
+        "description": "Configure device-specific parameters",
+        "data": {
+          "empty_weight": "Empty Litter Box Weight (kg)",
+          "max_samples_litter": "Litter Weight Sample Count"
+        },
+        "data_description": {
+          "empty_weight": "Weight of empty litter box for accurate litter level calculation",
+          "max_samples_litter": "Number of weight samples to determine if cat is present (1-100)"
+        }
+      },
+      "confirm": {
+        "title": "Confirm Configuration",
+        "description": "Please review your configuration:\n\n{config_summary}\n\nClick Submit to save this configuration."
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to CatLink servers. Please check your network connection and server region selection.",
+      "invalid_auth": "Invalid phone number or password. Please check your credentials.",
+      "unknown": "An unexpected error occurred. Please try again."
+    },
+    "abort": {
+      "already_configured": "This account is already configured. Each phone number can only be configured once."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "CatLink Options",
+        "description": "Update your CatLink integration settings",
+        "data": {
+          "scan_interval_seconds": "Update Interval (seconds)",
+          "language": "Language",
+          "empty_weight": "Empty Litter Box Weight (kg)",
+          "max_samples_litter": "Litter Weight Sample Count"
+        },
+        "data_description": {
+          "scan_interval_seconds": "How often to update device data (minimum 5 seconds, no maximum limit)",
+          "language": "Interface language for the integration",
+          "empty_weight": "Weight of empty litter box for accurate calculation",
+          "max_samples_litter": "Number of weight samples to determine cat presence"
+        }
+      }
+    }
+  }
+}
