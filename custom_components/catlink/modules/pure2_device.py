@@ -214,6 +214,11 @@ class Pure2Device(Device):
 
     async def select_run_mode(self, mode: str) -> bool:
         """Select run mode for the device."""
+        # Mode should already be in API format from the dropdown
+        if mode in ["CONTINUOUS_SPRING", "INDUCTION_SPRING", "INTERMITTENT_SPRING"]:
+            return await self.set_run_mode(mode)
+        
+        # Fallback for backward compatibility with friendly names
         mode_map = {
             "continuous_spring": "CONTINUOUS_SPRING",
             "smart_spring": "INDUCTION_SPRING", 
@@ -312,12 +317,8 @@ class Pure2Device(Device):
         return {
             "run_mode": {
                 "icon": "mdi:water-sync",
-                "options": ["Continuous Spring", "Smart Spring", "Intermittent Spring"],
-                "current": {
-                    "CONTINUOUS_SPRING": "Continuous Spring",
-                    "INDUCTION_SPRING": "Smart Spring",
-                    "INTERMITTENT_SPRING": "Intermittent Spring",
-                }.get(self.run_mode, self.run_mode),
+                "options": ["CONTINUOUS_SPRING", "INDUCTION_SPRING", "INTERMITTENT_SPRING"],
+                "current": self.run_mode,
                 "async_select": self.select_run_mode,
             }
         }
