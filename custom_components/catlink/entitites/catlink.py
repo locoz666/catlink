@@ -48,6 +48,8 @@ class CatlinkEntity(CoordinatorEntity):
         if device.mac:
             device_info["connections"] = {("mac", device.mac)}
         
+        # Set proper configuration URL to avoid API URL being shown
+        device_info["configuration_url"] = "https://catlinks.cn/"
             
         self._attr_device_info = DeviceInfo(**device_info)
         
