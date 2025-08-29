@@ -320,5 +320,6 @@ class Pure2Device(Device):
                 "options": ["CONTINUOUS_SPRING", "INDUCTION_SPRING", "INTERMITTENT_SPRING"],
                 "current": self.run_mode,
                 "async_select": self.select_run_mode,
+                "translation_key": "run_mode",
             }
         }

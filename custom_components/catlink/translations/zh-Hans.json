@@ -91,6 +91,185 @@
         "zh_CN": "简体中文",
         "en_GB": "English"
       }
+    },
+    "mode": {
+      "options": {
+        "Smart Mode": "智能模式",
+        "Timing Mode": "定时模式",
+        "auto": "自动",
+        "manual": "手动",
+        "timer": "定时"
+      }
+    },
+    "run_mode": {
+      "options": {
+        "CONTINUOUS_SPRING": "持续涌泉",
+        "INDUCTION_SPRING": "智能涌泉",
+        "INTERMITTENT_SPRING": "间歇涌泉"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "state": {
+        "name": "状态"
+      },
+      "error": {
+        "name": "错误信息"
+      },
+      "last_log": {
+        "name": "最后日志"
+      },
+      "litter_weight": {
+        "name": "猫砂重量"
+      },
+      "litter_remaining_days": {
+        "name": "猫砂剩余天数"
+      },
+      "total_clean_time": {
+        "name": "总清理次数"
+      },
+      "manual_clean_time": {
+        "name": "手动清理次数"
+      },
+      "deodorant_countdown": {
+        "name": "除臭剂倒计时"
+      },
+      "occupied": {
+        "name": "猫咪在内"
+      },
+      "online": {
+        "name": "在线状态"
+      },
+      "temperature": {
+        "name": "温度"
+      },
+      "humidity": {
+        "name": "湿度"
+      },
+      "garbage_tobe_status": {
+        "name": "垃圾袋状态"
+      },
+      "knob_status": {
+        "name": "旋钮状态"
+      },
+      "last_sync": {
+        "name": "最后同步"
+      },
+      "weight": {
+        "name": "重量"
+      },
+      "bowl_balance": {
+        "name": "食盆余量"
+      },
+      "total_food_intake": {
+        "name": "总进食量"
+      },
+      "desiccant_countdown": {
+        "name": "干燥剂倒计时"
+      },
+      "total_balance_desc": {
+        "name": "余粮描述"
+      },
+      "food_out_count": {
+        "name": "出粮份数"
+      },
+      "max_daily_food": {
+        "name": "每日最大出粮"
+      },
+      "water_level": {
+        "name": "水位"
+      },
+      "filter_countdown": {
+        "name": "滤芯倒计时"
+      },
+      "water_quality": {
+        "name": "水质"
+      },
+      "water_temperature": {
+        "name": "水温"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "在线"
+      },
+      "key_lock": {
+        "name": "按键锁"
+      },
+      "indicator_light": {
+        "name": "指示灯"
+      },
+      "night_mode": {
+        "name": "夜间模式"
+      },
+      "battery_installed": {
+        "name": "电池已安装"
+      },
+      "pure_locked": {
+        "name": "设备锁定"
+      },
+      "uv_light": {
+        "name": "紫外线灯"
+      },
+      "water_heater": {
+        "name": "加热器"
+      }
+    },
+    "switch": {
+      "all_timing": {
+        "name": "定时喂食"
+      },
+      "error_alert": {
+        "name": "故障提醒"
+      }
+    },
+    "select": {
+      "mode": {
+        "name": "模式"
+      },
+      "action": {
+        "name": "操作"
+      },
+      "garbage": {
+        "name": "垃圾袋操作"
+      },
+      "food_out_count": {
+        "name": "出粮份数"
+      },
+      "max_daily_food": {
+        "name": "每日最大份数"
+      },
+      "run_mode": {
+        "name": "运行模式"
+      }
+    },
+    "button": {
+      "feed": {
+        "name": "手动喂食"
+      }
+    },
+    "number": {
+      "food_out_count": {
+        "name": "出粮份数"
+      },
+      "max_daily_food": {
+        "name": "每日最大份数"
+      }
+    }
+  },
+  "device": {
+    "scooper": {
+      "name": "{device_name}"
+    },
+    "feeder": {
+      "name": "{device_name}"
+    },
+    "fresh2": {
+      "name": "{device_name}"
+    },
+    "pure2": {
+      "name": "{device_name}"
     }
   }
 }

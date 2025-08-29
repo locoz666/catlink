@@ -19,7 +19,13 @@ class CatlinkEntity(CoordinatorEntity):
         self._name = name
         self._device = device
         self._option = option or {}
-        self._attr_name = f"{device.name} {name}".strip()
+        
+        # Enable i18n support
+        self._attr_has_entity_name = True
+        self._attr_translation_key = name.lower().replace(" ", "_")
+        
+        # Keep original name as fallback
+        self._attr_name = name
         self._attr_device_id = f"{device.type}_{device.mac}"
         self._attr_unique_id = f"{self._attr_device_id}-{name}"
         self._attr_icon = self._option.get("icon")

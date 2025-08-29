@@ -76,5 +76,200 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "state": {
+        "name": "State"
+      },
+      "error": {
+        "name": "Error"
+      },
+      "last_log": {
+        "name": "Last Log"
+      },
+      "litter_weight": {
+        "name": "Litter Weight"
+      },
+      "litter_remaining_days": {
+        "name": "Litter Remaining Days"
+      },
+      "total_clean_time": {
+        "name": "Total Clean Count"
+      },
+      "manual_clean_time": {
+        "name": "Manual Clean Count"
+      },
+      "deodorant_countdown": {
+        "name": "Deodorant Countdown"
+      },
+      "occupied": {
+        "name": "Cat Inside"
+      },
+      "online": {
+        "name": "Online"
+      },
+      "temperature": {
+        "name": "Temperature"
+      },
+      "humidity": {
+        "name": "Humidity"
+      },
+      "garbage_tobe_status": {
+        "name": "Garbage Bag Status"
+      },
+      "knob_status": {
+        "name": "Knob Status"
+      },
+      "last_sync": {
+        "name": "Last Sync"
+      },
+      "weight": {
+        "name": "Weight"
+      },
+      "bowl_balance": {
+        "name": "Bowl Balance"
+      },
+      "total_food_intake": {
+        "name": "Total Food Intake"
+      },
+      "desiccant_countdown": {
+        "name": "Desiccant Countdown"
+      },
+      "total_balance_desc": {
+        "name": "Food Description"
+      },
+      "food_out_count": {
+        "name": "Food Portions"
+      },
+      "max_daily_food": {
+        "name": "Max Daily Food"
+      },
+      "water_level": {
+        "name": "Water Level"
+      },
+      "filter_countdown": {
+        "name": "Filter Countdown"
+      },
+      "water_quality": {
+        "name": "Water Quality"
+      },
+      "water_temperature": {
+        "name": "Water Temperature"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "key_lock": {
+        "name": "Key Lock"
+      },
+      "indicator_light": {
+        "name": "Indicator Light"
+      },
+      "night_mode": {
+        "name": "Night Mode"
+      },
+      "battery_installed": {
+        "name": "Battery Installed"
+      },
+      "pure_locked": {
+        "name": "Device Locked"
+      },
+      "uv_light": {
+        "name": "UV Light"
+      },
+      "water_heater": {
+        "name": "Water Heater"
+      }
+    },
+    "switch": {
+      "all_timing": {
+        "name": "All Timing"
+      },
+      "error_alert": {
+        "name": "Error Alert"
+      }
+    },
+    "select": {
+      "mode": {
+        "name": "Mode"
+      },
+      "action": {
+        "name": "Action"
+      },
+      "garbage": {
+        "name": "Garbage"
+      },
+      "food_out_count": {
+        "name": "Food Portions"
+      },
+      "max_daily_food": {
+        "name": "Max Daily Food"
+      },
+      "run_mode": {
+        "name": "Run Mode"
+      }
+    },
+    "button": {
+      "feed": {
+        "name": "Feed"
+      }
+    },
+    "number": {
+      "food_out_count": {
+        "name": "Food Portions"
+      },
+      "max_daily_food": {
+        "name": "Max Daily Food"
+      }
+    }
+  },
+  "device": {
+    "scooper": {
+      "name": "{device_name}"
+    },
+    "feeder": {
+      "name": "{device_name}"
+    },
+    "fresh2": {
+      "name": "{device_name}"
+    },
+    "pure2": {
+      "name": "{device_name}"
+    }
+  },
+  "selector": {
+    "server_region": {
+      "options": {
+        "global": "Global",
+        "china": "China",
+        "euroamerica": "Europe & Americas",
+        "singapore": "Singapore"
+      }
+    },
+    "language": {
+      "options": {
+        "zh_CN": "Simplified Chinese",
+        "en_GB": "English"
+      }
+    },
+    "mode": {
+      "options": {
+        "Smart Mode": "Smart Mode",
+        "Timing Mode": "Timing Mode",
+        "auto": "Auto",
+        "manual": "Manual",
+        "timer": "Timer"
+      }
+    },
+    "run_mode": {
+      "options": {
+        "CONTINUOUS_SPRING": "Continuous Spring",
+        "INDUCTION_SPRING": "Smart Spring",
+        "INTERMITTENT_SPRING": "Intermittent Spring"
+      }
+    }
   }
 }

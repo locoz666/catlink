@@ -464,6 +464,7 @@ class Fresh2FeederDevice(Device):
                 "state_attrs": lambda: {"current_model": self.detail.get("currentModel")},
                 "async_select": self.select_mode,
                 "delay_update": 5,
+                "translation_key": "mode",
             },
         }
         
