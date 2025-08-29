@@ -13,6 +13,7 @@ from ..modules.fresh2_feeder_device import Fresh2FeederDevice
 from ..modules.litterbox import LitterBox
 from ..modules.pure2_device import Pure2Device
 from ..modules.scooper_device import ScooperDevice
+from ..number import CatlinkNumberEntity
 from ..select import CatlinkSelectEntity
 from ..sensor import CatlinkSensorEntity
 from ..switch import CatlinkSwitchEntity
@@ -115,6 +116,8 @@ class DevicesCoordinator(DataUpdateCoordinator):
                 new = CatlinkSelectEntity(k, dvc, cfg)
             elif domain == "button":
                 new = CatlinkButtonEntity(k, dvc, cfg)
+            elif domain == "number":
+                new = CatlinkNumberEntity(k, dvc, cfg)
             if new:
                 self._subs[key] = new
                 add([new])

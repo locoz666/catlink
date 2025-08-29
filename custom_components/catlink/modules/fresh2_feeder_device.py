@@ -465,23 +465,35 @@ class Fresh2FeederDevice(Device):
                 "async_select": self.select_mode,
                 "delay_update": 5,
             },
+        }
+        
+        return selects
+
+    @property
+    def hass_number(self) -> dict:
+        """Return the device numbers."""
+        numbers = {
             "food_out_count": {
                 "icon": "mdi:food",
-                "options": [str(i) for i in range(1, 11)],  # 1-10 portions
-                "current": str(self.food_out_count),
-                "async_select": lambda option, **kwargs: self.set_food_out_count(int(option)),
+                "min": 0,
+                "max": None,  # No upper limit
+                "step": 1,
+                "state": self.food_out_count,
+                "async_set_value": self.set_food_out_count,
                 "delay_update": 3,
             },
         }
         
-        # Only add max_daily_food select in smart mode
+        # Only add max_daily_food number in smart mode
         if self.detail.get("currentModel", 0) == 0:
-            selects["max_daily_food"] = {
+            numbers["max_daily_food"] = {
                 "icon": "mdi:food-turkey",
-                "options": [str(i) for i in range(1, 11)],  # 1-10 portions
-                "current": str(self.max_daily_food),
-                "async_select": lambda option, **kwargs: self.set_max_daily_food(int(option)),
+                "min": 0,
+                "max": None,  # No upper limit
+                "step": 1,
+                "state": self.max_daily_food,
+                "async_set_value": self.set_max_daily_food,
                 "delay_update": 3,
             }
         
-        return selects
+        return numbers
