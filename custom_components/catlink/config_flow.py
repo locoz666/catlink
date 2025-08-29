@@ -228,6 +228,88 @@ class CatlinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         
         return True
 
+    async def async_step_import(self, import_data) -> FlowResult:
+        """Handle import from YAML configuration."""
+        errors = {}
+        
+        # Extract account information
+        phone = import_data.get(CONF_PHONE)
+        phone_iac = import_data.get(CONF_PHONE_IAC, "86")
+        password = import_data.get(CONF_PASSWORD)
+        
+        if not phone or not password:
+            _LOGGER.error("Missing required fields for YAML import: phone or password")
+            return self.async_abort(reason="missing_required_fields")
+        
+        # Set unique ID and check for duplicates
+        unique_id = f"{phone_iac}-{phone}"
+        await self.async_set_unique_id(unique_id)
+        self._abort_if_unique_id_configured()
+        
+        # Validate authentication
+        try:
+            # Determine API base URL
+            api_base = import_data.get(CONF_API_BASE)
+            if not api_base:
+                api_base = SERVER_REGIONS["china"]  # Default
+            elif api_base not in SERVER_REGIONS.values():
+                # If it's a custom API base, use it as is
+                pass
+            
+            config = {
+                CONF_PHONE: phone,
+                CONF_PHONE_IAC: phone_iac,
+                CONF_PASSWORD: password,
+                CONF_API_BASE: api_base,
+                CONF_LANGUAGE: import_data.get(CONF_LANGUAGE, "zh_CN"),
+            }
+            
+            account = Account(self.hass, config)
+            success = await account.async_login()
+            if not success:
+                _LOGGER.error("Authentication failed during YAML import for account %s", unique_id)
+                return self.async_abort(reason="invalid_auth")
+                
+        except Exception as exc:
+            _LOGGER.error("Error during YAML import validation for account %s: %s", unique_id, exc)
+            return self.async_abort(reason="unknown")
+        
+        # Prepare final configuration data
+        config_data = {
+            CONF_PHONE: phone,
+            CONF_PHONE_IAC: phone_iac,
+            CONF_PASSWORD: password,
+            CONF_API_BASE: api_base,
+            CONF_LANGUAGE: import_data.get(CONF_LANGUAGE, "zh_CN"),
+        }
+        
+        # Handle scan interval
+        scan_interval = import_data.get("scan_interval", "00:01:00")
+        if isinstance(scan_interval, str):
+            config_data[CONF_SCAN_INTERVAL] = scan_interval
+        else:
+            # If it's a timedelta object, convert to string format
+            total_seconds = int(scan_interval.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            config_data[CONF_SCAN_INTERVAL] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        
+        # Add optional device-specific configuration
+        if "empty_weight" in import_data:
+            config_data["empty_weight"] = import_data["empty_weight"]
+        if "max_samples_litter" in import_data:
+            config_data["max_samples_litter"] = import_data["max_samples_litter"]
+        
+        # Create the config entry
+        title = f"CatLink ({phone}) - Migrated from YAML"
+        _LOGGER.info("Successfully imported YAML configuration for account %s", unique_id)
+        
+        return self.async_create_entry(
+            title=title,
+            data=config_data,
+        )
+
     @staticmethod
     @callback
     def async_get_options_flow(

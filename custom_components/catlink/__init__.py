@@ -6,7 +6,17 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.entity_component import EntityComponent
 
-from .const import _LOGGER, CONF_ACCOUNTS, DOMAIN, SCAN_INTERVAL, SUPPORTED_DOMAINS
+from .const import (
+    _LOGGER,
+    CONF_ACCOUNTS,
+    CONF_API_BASE,
+    CONF_LANGUAGE,
+    CONF_PHONE,
+    CONF_PHONE_IAC,
+    DOMAIN,
+    SCAN_INTERVAL,
+    SUPPORTED_DOMAINS,
+)
 from .modules.account import Account
 from .modules.devices_coordinator import DevicesCoordinator
 
@@ -25,18 +35,93 @@ async def async_setup(hass: HomeAssistant, hass_config: dict) -> bool:
     if not config or len(config) == 0:
         return True
 
-    component = EntityComponent(_LOGGER, DOMAIN, hass, SCAN_INTERVAL)
-    hass.data[DOMAIN]["component"] = component
-    await component.async_setup(config)
-
+    # Check if we have YAML accounts to migrate
     als = config.get(CONF_ACCOUNTS) or []
     if CONF_PASSWORD in config:
         acc = {**config}
         acc.pop(CONF_ACCOUNTS, None)
         als.append(acc)
+
+    # Migrate YAML configurations to config entries
+    migrated_accounts = []
     for cfg in als:
         if not cfg.get(CONF_PASSWORD) and not cfg.get(CONF_TOKEN):
             continue
+            
+        # Create unique ID for this account
+        phone = cfg.get(CONF_PHONE) or cfg.get("phone")
+        phone_iac = cfg.get(CONF_PHONE_IAC) or cfg.get("phone_iac", "86")
+        if not phone:
+            _LOGGER.warning("Skipping YAML account with no phone number")
+            continue
+            
+        unique_id = f"{phone_iac}-{phone}"
+        
+        # Check if config entry already exists
+        existing_entry = None
+        for entry in hass.config_entries.async_entries(DOMAIN):
+            if entry.unique_id == unique_id:
+                existing_entry = entry
+                break
+        
+        if existing_entry:
+            _LOGGER.info("Config entry already exists for account %s, skipping YAML migration", unique_id)
+            migrated_accounts.append(unique_id)
+            continue
+        
+        # Prepare config data for migration
+        import_data = {
+            CONF_PHONE: phone,
+            CONF_PHONE_IAC: phone_iac,
+            CONF_PASSWORD: cfg.get(CONF_PASSWORD),
+        }
+        
+        # Add optional fields
+        if cfg.get(CONF_API_BASE) or cfg.get("api_base"):
+            import_data[CONF_API_BASE] = cfg.get(CONF_API_BASE) or cfg.get("api_base")
+        if cfg.get(CONF_LANGUAGE) or cfg.get("language"):
+            import_data[CONF_LANGUAGE] = cfg.get(CONF_LANGUAGE) or cfg.get("language")
+        if cfg.get("scan_interval"):
+            import_data["scan_interval"] = cfg.get("scan_interval")
+        if cfg.get("empty_weight"):
+            import_data["empty_weight"] = cfg.get("empty_weight")
+        if cfg.get("max_samples_litter"):
+            import_data["max_samples_litter"] = cfg.get("max_samples_litter")
+            
+        # Trigger import flow
+        _LOGGER.info("Migrating YAML configuration for account %s to config entry", unique_id)
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": "import"},
+                data=import_data,
+            )
+        )
+        migrated_accounts.append(unique_id)
+
+    # If all accounts were migrated or already exist as config entries, skip YAML entity creation
+    if als and len(migrated_accounts) == len(als):
+        _LOGGER.info("All YAML accounts migrated to config entries, skipping YAML entity setup")
+        return True
+
+    # For any remaining accounts that couldn't be migrated, continue with YAML setup
+    component = EntityComponent(_LOGGER, DOMAIN, hass, SCAN_INTERVAL)
+    hass.data[DOMAIN]["component"] = component
+    await component.async_setup(config)
+
+    for cfg in als:
+        if not cfg.get(CONF_PASSWORD) and not cfg.get(CONF_TOKEN):
+            continue
+            
+        phone = cfg.get(CONF_PHONE) or cfg.get("phone")
+        phone_iac = cfg.get(CONF_PHONE_IAC) or cfg.get("phone_iac", "86")
+        if not phone:
+            continue
+            
+        unique_id = f"{phone_iac}-{phone}"
+        if unique_id in migrated_accounts:
+            continue
+            
         acc = Account(hass, cfg)
         coordinator = DevicesCoordinator(acc)
         await acc.async_check_auth()
