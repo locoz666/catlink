@@ -212,7 +212,7 @@ class Pure2Device(Device):
         """Return the current run mode."""
         return self.detail.get("runMode", "")
 
-    async def select_run_mode(self, mode: str) -> bool:
+    async def select_run_mode(self, mode: str, **kwargs) -> bool:
         """Select run mode for the device."""
         # Mode should already be in API format from the dropdown
         if mode in ["CONTINUOUS_SPRING", "INDUCTION_SPRING", "INTERMITTENT_SPRING"]:
