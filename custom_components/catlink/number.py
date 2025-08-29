@@ -2,7 +2,7 @@
 
 import asyncio
 
-from homeassistant.components.number import DOMAIN as ENTITY_DOMAIN, NumberEntity
+from homeassistant.components.number import DOMAIN as ENTITY_DOMAIN, NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -78,6 +78,10 @@ class CatlinkNumberEntity(CatlinkEntity, NumberEntity):
         self._attr_native_max_value = self._option.get("max", 100)
         self._attr_native_step = self._option.get("step", 1)
         self._attr_native_value = None
+        
+        # Set input box mode for specific entities
+        if name in ["food_out_count", "max_daily_food"]:
+            self._attr_mode = NumberMode.BOX
 
     def update(self) -> None:
         """Update the entity."""
