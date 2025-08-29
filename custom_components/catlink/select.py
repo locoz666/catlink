@@ -76,6 +76,10 @@ class CatlinkSelectEntity(CatlinkEntity, SelectEntity):
         super().__init__(name, device, option)
         self._attr_current_option = None
         self._attr_options = self._option.get("options")
+        
+        # Override translation_key if provided in option for selector-specific translation
+        if "translation_key" in self._option:
+            self._attr_translation_key = self._option["translation_key"]
 
     def update(self) -> None:
         """Update the entity."""

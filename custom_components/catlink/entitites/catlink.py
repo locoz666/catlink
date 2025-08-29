@@ -24,8 +24,8 @@ class CatlinkEntity(CoordinatorEntity):
         self._attr_has_entity_name = True
         self._attr_translation_key = name.lower().replace(" ", "_")
         
-        # Keep original name as fallback
-        self._attr_name = name
+        # Set name to None to let translation system work
+        self._attr_name = None
         self._attr_device_id = f"{device.type}_{device.mac}"
         self._attr_unique_id = f"{self._attr_device_id}-{name}"
         self._attr_icon = self._option.get("icon")
