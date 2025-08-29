@@ -235,7 +235,6 @@ class Pure2Device(Device):
                 "icon": "mdi:water-percent",
                 "state": self.water_level,
                 "unit": PERCENTAGE,
-                "class": SensorDeviceClass.BATTERY,  # Use battery class for percentage display
                 "state_class": SensorStateClass.MEASUREMENT,
             },
             "filter_countdown": {
