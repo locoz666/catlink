@@ -482,6 +482,7 @@ class Fresh2FeederDevice(Device):
                 "state": self.food_out_count,
                 "async_set_value": self.set_food_out_count,
                 "delay_update": 3,
+                "translation_key": "food_out_count",
             },
         }
         
@@ -495,6 +496,7 @@ class Fresh2FeederDevice(Device):
                 "state": self.max_daily_food,
                 "async_set_value": self.set_max_daily_food,
                 "delay_update": 3,
+                "translation_key": "max_daily_food",
             }
         
         return numbers

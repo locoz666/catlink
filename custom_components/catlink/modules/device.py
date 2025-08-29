@@ -161,12 +161,14 @@ class Device:
                 "options": list(self.modes.values()),
                 "state_attrs": self.mode_attrs,
                 "async_select": self.select_mode,
+                "translation_key": "mode",
             },
             "action": {
                 "icon": "mdi:play-box",
                 "options": list(self.actions.values()),
                 "async_select": self.select_action,
                 "delay_update": 5,
+                "translation_key": "action",
             },
         }
 

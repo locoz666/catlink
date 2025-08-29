@@ -95,10 +95,23 @@
     "mode": {
       "options": {
         "Smart Mode": "智能模式",
-        "Timing Mode": "定时模式",
+        "Timing Mode": "定时模式", 
         "auto": "自动",
         "manual": "手动",
-        "timer": "定时"
+        "time": "定时",
+        "empty": "清空"
+      }
+    },
+    "action": {
+      "options": {
+        "pause": "暂停",
+        "start": "开始"
+      }
+    },
+    "garbage": {
+      "options": {
+        "Change Bag": "更换垃圾袋",
+        "Reset": "重置"
       }
     },
     "run_mode": {

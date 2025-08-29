@@ -261,7 +261,20 @@
         "Timing Mode": "Timing Mode",
         "auto": "Auto",
         "manual": "Manual",
-        "timer": "Timer"
+        "time": "Timer",
+        "empty": "Empty"
+      }
+    },
+    "action": {
+      "options": {
+        "pause": "Pause",
+        "start": "Start"
+      }
+    },
+    "garbage": {
+      "options": {
+        "Change Bag": "Change Bag",
+        "Reset": "Reset"
       }
     },
     "run_mode": {
