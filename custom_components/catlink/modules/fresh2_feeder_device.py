@@ -477,7 +477,7 @@ class Fresh2FeederDevice(Device):
             "food_out_count": {
                 "icon": "mdi:food",
                 "min": 0,
-                "max": None,  # No upper limit
+                "max": 999,
                 "step": 1,
                 "state": self.food_out_count,
                 "async_set_value": self.set_food_out_count,
@@ -490,7 +490,7 @@ class Fresh2FeederDevice(Device):
             numbers["max_daily_food"] = {
                 "icon": "mdi:food-turkey",
                 "min": 0,
-                "max": None,  # No upper limit
+                "max": 999,
                 "step": 1,
                 "state": self.max_daily_food,
                 "async_set_value": self.set_max_daily_food,
