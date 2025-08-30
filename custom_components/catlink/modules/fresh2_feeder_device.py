@@ -279,7 +279,7 @@ class Fresh2FeederDevice(Device):
         """Return the max daily food portions for smart mode."""
         return self.detail.get("maxFoodOutNumber", 2)
 
-    async def set_food_out_count(self, count: int) -> bool:
+    async def set_food_out_count(self, count: int, **kwargs) -> bool:
         """Set the food out count per feeding."""
         api = "token/device/feederpro/switchMode/v2"
         
@@ -305,7 +305,7 @@ class Fresh2FeederDevice(Device):
         _LOGGER.info("Set food out count: %s", [rdt, pms])
         return rdt
 
-    async def set_max_daily_food(self, max_food: int) -> bool:
+    async def set_max_daily_food(self, max_food: int, **kwargs) -> bool:
         """Set the max daily food portions for smart mode."""
         # Only applicable in smart mode
         if self.detail.get("currentModel", 0) != 0:
