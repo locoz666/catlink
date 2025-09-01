@@ -112,17 +112,8 @@ class Pure2Device(Device):
     def state_attrs(self) -> dict:
         """Return the state attributes of the device."""
         return {
-            "run_mode": self.detail.get("runMode"),
-            "water_level_status": self.detail.get("waterLevelStrDescription"),
-            "water_level_num_desc": self.detail.get("waterLevelNumDescription"),
-            "fluffy_hair_status": self.detail.get("fluffyHairStatus"),
-            "pure_light_status": self.detail.get("pureLightStatus"),
-            "water_heat_switch": self.detail.get("waterHeatSwitch"),
-            "uv_switch": self.detail.get("ultravioletRaysSwitch"),
-            "pure_lock_status": self.detail.get("pureLockStatus"),
-            "error": self.detail.get("error"),
-            "model": self.detail.get("model"),
-            "firmware_version": self.detail.get("firmwareVersion"),
+            "device_id": self.id,
+            "last_updated": self.detail.get("lastUpdateTime"),
         }
 
     @property
@@ -153,12 +144,18 @@ class Pure2Device(Device):
     @property
     def uv_light_on(self) -> bool:
         """Return if UV light is on."""
-        return self.detail.get("ultravioletRaysSwitch") == "OPEN"
+        uv_switch = self.detail.get("ultravioletRaysSwitch")
+        if uv_switch is None:
+            return False
+        return uv_switch == "OPEN"
 
     @property
     def water_heater_on(self) -> bool:
         """Return if water heater is on."""
-        return self.detail.get("waterHeatSwitch") == "OPEN"
+        heat_switch = self.detail.get("waterHeatSwitch")
+        if heat_switch is None:
+            return False
+        return heat_switch == "OPEN"
 
     @property
     def pure_locked(self) -> bool:
@@ -212,6 +209,26 @@ class Pure2Device(Device):
         """Return the current run mode."""
         return self.detail.get("runMode", "")
 
+    @property
+    def fluffy_hair_status(self) -> str:
+        """Return the fluffy hair filter status."""
+        return self.detail.get("fluffyHairStatus", "")
+
+    @property
+    def pure_light_status(self) -> str:
+        """Return the pure light status."""
+        return self.detail.get("pureLightStatus", "")
+
+    @property
+    def water_level_description(self) -> str:
+        """Return the water level description."""
+        return self.detail.get("waterLevelStrDescription", "")
+
+    @property
+    def water_level_num_description(self) -> str:
+        """Return the water level numeric description."""
+        return self.detail.get("waterLevelNumDescription", "")
+
     async def select_run_mode(self, mode: str, **kwargs) -> bool:
         """Select run mode for the device."""
         # Mode should already be in API format from the dropdown
@@ -242,6 +259,10 @@ class Pure2Device(Device):
                 "unit": PERCENTAGE,
                 "state_class": SensorStateClass.MEASUREMENT,
             },
+            "water_level_description": {
+                "icon": "mdi:water-percent",
+                "state": self.water_level_description,
+            },
             "filter_countdown": {
                 "icon": "mdi:calendar-clock",
                 "state": self.filter_countdown,
@@ -252,6 +273,14 @@ class Pure2Device(Device):
                 "icon": "mdi:water-check",
                 "state": self.water_quality,
                 "state_class": SensorStateClass.MEASUREMENT,
+            },
+            "fluffy_hair_status": {
+                "icon": "mdi:air-filter",
+                "state": self.fluffy_hair_status,
+            },
+            "pure_light_status": {
+                "icon": "mdi:lightbulb",
+                "state": self.pure_light_status,
             },
             "error": {
                 "icon": "mdi:alert-circle",
@@ -293,21 +322,19 @@ class Pure2Device(Device):
             },
         }
         
-        # UV light sensor (only for Pure2 UV model)
-        if "ultravioletRaysSwitch" in self.detail:
-            binary_sensors["uv_light"] = {
-                "icon": "mdi:sun-wireless",
-                "state": self.uv_light_on,
-                "device_class": "light",
-            }
+        # UV light sensor (always add for Pure2 devices, will be False if not available)
+        binary_sensors["uv_light"] = {
+            "icon": "mdi:sun-wireless",
+            "state": self.uv_light_on,
+            "device_class": "light",
+        }
         
-        # Water heater sensor
-        if "waterHeatSwitch" in self.detail:
-            binary_sensors["water_heater"] = {
-                "icon": "mdi:water-boiler",
-                "state": self.water_heater_on,
-                "device_class": "heat",
-            }
+        # Water heater sensor (always add for Pure2 devices, will be False if not available)
+        binary_sensors["water_heater"] = {
+            "icon": "mdi:water-boiler",
+            "state": self.water_heater_on,
+            "device_class": "heat",
+        }
         
         return binary_sensors
 
