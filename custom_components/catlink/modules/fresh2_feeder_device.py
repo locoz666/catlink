@@ -1,15 +1,19 @@
 """Fresh2 Feeder device class for CatLink integration."""
 
 import datetime
-from typing import TYPE_CHECKING
+from collections import deque
+from datetime import datetime as dt, timedelta
+from typing import TYPE_CHECKING, Optional
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfMass, UnitOfTime
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from ..const import _LOGGER, DOMAIN
 from ..models.additional_cfg import AdditionalDeviceConfig
 from .device import Device
+from .eating_data_processor import EatingDataProcessor, EatingStateMachine, EatingEvent
 
 if TYPE_CHECKING:
     from .devices_coordinator import DevicesCoordinator
@@ -30,6 +34,22 @@ class Fresh2FeederDevice(Device):
         """Initialize the Fresh2 Feeder device."""
         super().__init__(dat, coordinator, additional_config)
 
+        # Initialize eating detection components
+        self.weight_history = deque(maxlen=17280)  # 24 hours at 5s intervals
+        self.eating_processor = EatingDataProcessor(
+            stable_duration_seconds=getattr(additional_config, 'stable_duration', 60),
+            sample_interval=5,
+            min_eating_amount=getattr(additional_config, 'min_eating_amount', 2),
+            spike_threshold=getattr(additional_config, 'spike_threshold', 100)
+        )
+        self.state_machine = EatingStateMachine(
+            processor=self.eating_processor,
+            min_eating_amount=getattr(additional_config, 'min_eating_amount', 2)
+        )
+        self.today_events = []
+        self._last_process_time = None
+        self._eating_events_store = None
+
     async def async_init(self) -> None:
         """Initialize the device."""
         await super().async_init()
@@ -42,6 +62,16 @@ class Fresh2FeederDevice(Device):
             update_interval=datetime.timedelta(minutes=1),
         )
         await self.coordinator_logs.async_config_entry_first_refresh()
+
+        # Initialize storage for eating events
+        self._eating_events_store = Store(
+            self.account.hass,
+            1,
+            f"catlink_eating_history_{self.id}"
+        )
+
+        # Load historical eating events
+        await self._load_eating_events()
 
     async def update_device_detail(self) -> dict:
         """Update device details from API."""
@@ -60,6 +90,10 @@ class Fresh2FeederDevice(Device):
             _LOGGER.warning("Got device detail for %s failed: %s", self.name, rsp)
         _LOGGER.debug("Update device detail: %s", rsp)
         self.detail = rdt
+
+        # Process weight sample for eating detection
+        await self._process_weight_sample()
+
         self._handle_listeners()
         return rdt
 
@@ -353,6 +387,40 @@ class Fresh2FeederDevice(Device):
                 "unit": UnitOfMass.GRAMS,
                 "state_class": SensorStateClass.TOTAL_INCREASING,
             },
+            "daily_actual_intake": {
+                "icon": "mdi:food-apple-outline",
+                "state": self.daily_actual_intake,
+                "unit": UnitOfMass.GRAMS,
+                "state_class": SensorStateClass.TOTAL_INCREASING,
+                "state_attrs": lambda: {
+                    "eating_events": len(self.today_events),
+                    "last_event_time": self.last_eating_time,
+                    "last_event_amount": self.last_eating_amount,
+                    "average_per_meal": round(self.average_meal_size, 1),
+                }
+            },
+            "eating_status": {
+                "icon": "mdi:cat",
+                "state": self.eating_status,
+                "state_attrs": lambda: {
+                    "current_duration": self.current_eating_duration,
+                    "current_amount": self.current_eating_amount,
+                    "stable_weight": self.bowl_weight_stable,
+                    "state_machine_state": self.state_machine.state,
+                }
+            },
+            "bowl_weight_stable": {
+                "icon": "mdi:scale-balance",
+                "state": self.bowl_weight_stable,
+                "unit": UnitOfMass.GRAMS,
+                "class": SensorDeviceClass.WEIGHT,
+                "state_class": SensorStateClass.MEASUREMENT,
+                "state_attrs": lambda: {
+                    "is_stable": self.is_currently_stable,
+                    "stable_duration": self.stable_duration,
+                    "raw_weight": self.bowl_balance,
+                }
+            },
             "desiccant_countdown": {
                 "icon": "mdi:water-off",
                 "state": self.desiccant_countdown,
@@ -369,7 +437,7 @@ class Fresh2FeederDevice(Device):
                 "state_attrs": self.last_log_attrs,
             },
         }
-        
+
         # Only add error sensor if there's an error
         if self.error:
             sensors["error"] = {
@@ -377,7 +445,7 @@ class Fresh2FeederDevice(Device):
                 "state": self.error,
                 "state_attrs": self.error_attrs,
             }
-        
+
         return sensors
 
     @property
@@ -485,7 +553,7 @@ class Fresh2FeederDevice(Device):
                 "translation_key": "food_out_count",
             },
         }
-        
+
         # Only add max_daily_food number in smart mode
         if self.detail.get("currentModel", 0) == 0:
             numbers["max_daily_food"] = {
@@ -498,5 +566,211 @@ class Fresh2FeederDevice(Device):
                 "delay_update": 3,
                 "translation_key": "max_daily_food",
             }
-        
+
         return numbers
+
+    async def _process_weight_sample(self) -> None:
+        """Process weight sample for eating detection."""
+        current_time = dt.now()
+        current_weight = self.bowl_balance
+
+        # Prevent duplicate processing
+        if self._last_process_time:
+            time_diff = (current_time - self._last_process_time).total_seconds()
+            if time_diff < 3:  # Less than 3 seconds is considered duplicate
+                return
+
+        self._last_process_time = current_time
+
+        # Add to history
+        self.weight_history.append({
+            'timestamp': current_time,
+            'weight': current_weight
+        })
+
+        # Process through state machine
+        event = self.state_machine.process_weight(current_weight, current_time)
+        if event:
+            await self._handle_eating_event(event)
+
+        # Clean up old events daily
+        await self._cleanup_old_events()
+
+        _LOGGER.debug(
+            "Weight sample: time=%s, weight=%d, state=%s, stable=%s",
+            current_time.isoformat(),
+            current_weight,
+            self.state_machine.state,
+            self.state_machine.processor.last_stable_weight
+        )
+
+    async def _handle_eating_event(self, event: EatingEvent) -> None:
+        """Handle a completed eating event."""
+        self.today_events.append(event)
+        _LOGGER.info(
+            "Eating event completed: %dg consumed in %ds (from %dg to %dg)",
+            event.amount,
+            event.duration,
+            event.start_weight,
+            event.end_weight
+        )
+        await self._save_eating_events()
+
+    async def _save_eating_events(self) -> None:
+        """Save eating events to storage."""
+        if not self._eating_events_store:
+            return
+
+        # Prepare data for storage
+        data = {
+            "events": [
+                {
+                    "start": event.start_time.isoformat(),
+                    "end": event.end_time.isoformat(),
+                    "amount": event.amount,
+                    "duration": event.duration,
+                    "start_weight": event.start_weight,
+                    "end_weight": event.end_weight,
+                    "max_weight": event.max_weight
+                }
+                for event in self.today_events
+            ],
+            "last_updated": dt.now().isoformat()
+        }
+
+        await self._eating_events_store.async_save(data)
+
+    async def _load_eating_events(self) -> None:
+        """Load eating events from storage."""
+        if not self._eating_events_store:
+            return
+
+        data = await self._eating_events_store.async_load()
+        if not data:
+            return
+
+        # Load today's events
+        today = dt.now().date()
+        self.today_events = []
+
+        for event_data in data.get("events", []):
+            try:
+                start_time = dt.fromisoformat(event_data["start"])
+                if start_time.date() == today:
+                    event = EatingEvent(
+                        start_time=start_time,
+                        end_time=dt.fromisoformat(event_data["end"]),
+                        start_weight=event_data["start_weight"],
+                        end_weight=event_data["end_weight"],
+                        amount=event_data["amount"],
+                        duration=event_data["duration"],
+                        max_weight=event_data.get("max_weight", 0)
+                    )
+                    self.today_events.append(event)
+            except (KeyError, ValueError) as e:
+                _LOGGER.warning("Failed to load eating event: %s", e)
+
+    async def _cleanup_old_events(self) -> None:
+        """Clean up events older than 7 days and reset daily counters."""
+        now = dt.now()
+        today = now.date()
+
+        # Reset today's events at midnight
+        if self.today_events and self.today_events[0].start_time.date() < today:
+            # Save yesterday's events before clearing
+            await self._save_eating_events()
+
+            # Keep only today's events
+            self.today_events = [
+                event for event in self.today_events
+                if event.start_time.date() == today
+            ]
+
+    @property
+    def daily_actual_intake(self) -> int:
+        """Return today's actual food intake based on eating events."""
+        today = dt.now().date()
+        return sum(
+            event.amount
+            for event in self.today_events
+            if event.start_time.date() == today
+        )
+
+    @property
+    def eating_status(self) -> str:
+        """Return current eating status."""
+        if self.state_machine.is_eating:
+            if self.state_machine.state == "EATING":
+                return "eating"
+            else:
+                return "stabilizing"
+        elif self.state_machine.last_event:
+            # Check if just finished eating (within last 5 minutes)
+            if self.state_machine.last_event.end_time:
+                time_since_end = (dt.now() - self.state_machine.last_event.end_time).total_seconds()
+                if time_since_end < 300:
+                    return "just_finished"
+        return "idle"
+
+    @property
+    def current_eating_duration(self) -> int:
+        """Return current eating duration in seconds."""
+        return self.state_machine.current_eating_duration
+
+    @property
+    def current_eating_amount(self) -> int:
+        """Return current eating amount in grams."""
+        return self.state_machine.current_eating_amount
+
+    @property
+    def last_eating_time(self) -> Optional[str]:
+        """Return the time of the last eating event."""
+        if self.today_events:
+            return self.today_events[-1].end_time.strftime("%H:%M")
+        return None
+
+    @property
+    def last_eating_amount(self) -> int:
+        """Return the amount of the last eating event."""
+        if self.today_events:
+            return self.today_events[-1].amount
+        return 0
+
+    @property
+    def average_meal_size(self) -> float:
+        """Return average meal size for today."""
+        if not self.today_events:
+            return 0.0
+        return sum(e.amount for e in self.today_events) / len(self.today_events)
+
+    @property
+    def bowl_weight_stable(self) -> int:
+        """Return the last stable bowl weight."""
+        return self.state_machine.processor.last_stable_weight or self.bowl_balance
+
+    @property
+    def is_currently_stable(self) -> bool:
+        """Check if weight is currently stable."""
+        is_stable, _ = self.state_machine.processor.check_stability()
+        return is_stable
+
+    @property
+    def stable_duration(self) -> int:
+        """Return how long weight has been stable in seconds."""
+        if not self.is_currently_stable:
+            return 0
+
+        # Find when stability started
+        if not self.weight_history:
+            return 0
+
+        current_weight = self.bowl_balance
+        for i in range(len(self.weight_history) - 1, -1, -1):
+            if self.weight_history[i]['weight'] != current_weight:
+                # Found where weight changed
+                if i < len(self.weight_history) - 1:
+                    stable_start = self.weight_history[i + 1]['timestamp']
+                    return int((dt.now() - stable_start).total_seconds())
+                break
+
+        return 0
