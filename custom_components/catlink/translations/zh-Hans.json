@@ -104,8 +104,8 @@
     },
     "action": {
       "options": {
-        "pause": "暂停",
-        "start": "开始"
+        "Cleaning": "清理中",
+        "Pause": "暂停"
       }
     },
     "garbage": {
