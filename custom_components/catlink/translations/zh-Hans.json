@@ -136,6 +136,48 @@
         "INDUCTION_SPRING": "智能涌泉",
         "INTERMITTENT_SPRING": "间歇涌泉"
       }
+    },
+    "eating_status": {
+      "options": {
+        "idle": "空闲",
+        "eating": "进食中",
+        "stabilizing": "稳定中",
+        "just_finished": "刚结束"
+      }
+    },
+    "fluffy_hair_status": {
+      "options": {
+        "STOP": "停止",
+        "OPEN": "开启"
+      }
+    },
+    "pure_light_status": {
+      "options": {
+        "STOP": "关闭",
+        "OPEN": "开启"
+      }
+    },
+    "knob_status": {
+      "options": {
+        "Empty Mode": "清空模式",
+        "Cleaning Mode": "清理模式",
+        "Unknown": "未知"
+      }
+    },
+    "garbage_tobe_status": {
+      "options": {
+        "Full": "已满",
+        "Normal": "正常",
+        "Unknown": "未知"
+      }
+    },
+    "state": {
+      "options": {
+        "idle": "空闲",
+        "running": "运行中",
+        "need_reset": "需要重置",
+        "unknown": "未知"
+      }
     }
   },
   "entity": {
@@ -217,6 +259,24 @@
       },
       "water_temperature": {
         "name": "水温"
+      },
+      "bowl_weight_stable": {
+        "name": "食盆重量稳定值"
+      },
+      "daily_actual_intake": {
+        "name": "每日实际进食量"
+      },
+      "eating_status": {
+        "name": "进食状态"
+      },
+      "fluffy_hair_status": {
+        "name": "绒毛滤网状态"
+      },
+      "pure_light_status": {
+        "name": "净化灯状态"
+      },
+      "water_level_description": {
+        "name": "水位描述"
       }
     },
     "binary_sensor": {

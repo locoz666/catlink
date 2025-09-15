@@ -172,6 +172,24 @@
       },
       "water_temperature": {
         "name": "Water Temperature"
+      },
+      "bowl_weight_stable": {
+        "name": "Bowl Weight Stable"
+      },
+      "daily_actual_intake": {
+        "name": "Daily Actual Intake"
+      },
+      "eating_status": {
+        "name": "Eating Status"
+      },
+      "fluffy_hair_status": {
+        "name": "Fluffy Hair Status"
+      },
+      "pure_light_status": {
+        "name": "Pure Light Status"
+      },
+      "water_level_description": {
+        "name": "Water Level Description"
       }
     },
     "binary_sensor": {
@@ -298,6 +316,48 @@
         "CONTINUOUS_SPRING": "Continuous Spring",
         "INDUCTION_SPRING": "Smart Spring",
         "INTERMITTENT_SPRING": "Intermittent Spring"
+      }
+    },
+    "eating_status": {
+      "options": {
+        "idle": "Idle",
+        "eating": "Eating",
+        "stabilizing": "Stabilizing",
+        "just_finished": "Just Finished"
+      }
+    },
+    "fluffy_hair_status": {
+      "options": {
+        "STOP": "Stop",
+        "OPEN": "Open"
+      }
+    },
+    "pure_light_status": {
+      "options": {
+        "STOP": "Off",
+        "OPEN": "On"
+      }
+    },
+    "knob_status": {
+      "options": {
+        "Empty Mode": "Empty Mode",
+        "Cleaning Mode": "Cleaning Mode",
+        "Unknown": "Unknown"
+      }
+    },
+    "garbage_tobe_status": {
+      "options": {
+        "Full": "Full",
+        "Normal": "Normal",
+        "Unknown": "Unknown"
+      }
+    },
+    "state": {
+      "options": {
+        "idle": "Idle",
+        "running": "Running",
+        "need_reset": "Need Reset",
+        "unknown": "Unknown"
       }
     }
   }
