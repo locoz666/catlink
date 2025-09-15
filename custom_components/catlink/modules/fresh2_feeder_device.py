@@ -1,6 +1,7 @@
 """Fresh2 Feeder device class for CatLink integration."""
 
 import datetime
+import json
 from collections import deque
 from datetime import datetime as dt, timedelta
 from typing import TYPE_CHECKING, Optional
@@ -87,8 +88,8 @@ class Fresh2FeederDevice(Device):
             rdt = {}
             _LOGGER.error("Got device detail for %s failed: %s", self.name, exc)
         if not rdt:
-            _LOGGER.warning("Got device detail for %s failed: %s", self.name, rsp)
-        _LOGGER.debug("Update device detail: %s", rsp)
+            _LOGGER.warning("Got device detail for %s failed: %s", self.name, json.dumps(rsp))
+        _LOGGER.debug("Update device detail: %s", json.dumps(rsp))
         self.detail = rdt
 
         # Process weight sample for eating detection
@@ -111,8 +112,8 @@ class Fresh2FeederDevice(Device):
             rdt = {}
             _LOGGER.warning("Got device logs for %s failed: %s", self.name, exc)
         if not rdt:
-            _LOGGER.debug("Got device logs for %s failed: %s", self.name, rsp)
-        _LOGGER.debug("Update device logs: %s", rsp)
+            _LOGGER.debug("Got device logs for %s failed: %s", self.name, json.dumps(rsp))
+        _LOGGER.debug("Update device logs: %s", json.dumps(rsp))
         self.logs = rdt
         self._handle_listeners()
         return rdt
@@ -296,11 +297,11 @@ class Fresh2FeederDevice(Device):
         rdt = await self.account.request(api, pms, "POST")
         eno = rdt.get("returnCode", 0)
         if eno:
-            _LOGGER.error("Select mode failed: %s", [rdt, pms])
+            _LOGGER.error("Select mode failed: %s", json.dumps([rdt, pms]))
             return False
         
         await self.update_device_detail()
-        _LOGGER.info("Select mode: %s", [rdt, pms])
+        _LOGGER.info("Select mode: %s", json.dumps([rdt, pms]))
         return rdt
 
     @property
@@ -332,11 +333,11 @@ class Fresh2FeederDevice(Device):
         rdt = await self.account.request(api, pms, "POST")
         eno = rdt.get("returnCode", 0)
         if eno:
-            _LOGGER.error("Set food out count failed: %s", [rdt, pms])
+            _LOGGER.error("Set food out count failed: %s", json.dumps([rdt, pms]))
             return False
         
         await self.update_device_detail()
-        _LOGGER.info("Set food out count: %s", [rdt, pms])
+        _LOGGER.info("Set food out count: %s", json.dumps([rdt, pms]))
         return rdt
 
     async def set_max_daily_food(self, max_food: int, **kwargs) -> bool:
@@ -358,11 +359,11 @@ class Fresh2FeederDevice(Device):
         rdt = await self.account.request(api, pms, "POST")
         eno = rdt.get("returnCode", 0)
         if eno:
-            _LOGGER.error("Set max daily food failed: %s", [rdt, pms])
+            _LOGGER.error("Set max daily food failed: %s", json.dumps([rdt, pms]))
             return False
         
         await self.update_device_detail()
-        _LOGGER.info("Set max daily food: %s", [rdt, pms])
+        _LOGGER.info("Set max daily food: %s", json.dumps([rdt, pms]))
         return rdt
 
     @property

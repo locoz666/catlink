@@ -4,6 +4,7 @@ from asyncio import TimeoutError
 import base64
 import datetime
 import hashlib
+import json
 import time
 
 from aiohttp import ClientConnectorError
@@ -111,7 +112,7 @@ class Account:
             req = await self.http.request(method, url, **kws)
             return await req.json() or {}
         except (ClientConnectorError, TimeoutError) as exc:  # noqa: UP041
-            _LOGGER.error("Request api failed: %s", [method, url, pms, exc])
+            _LOGGER.error("Request api failed: %s", json.dumps([method, url, pms, str(exc)]))
         return {}
 
     async def async_login(self) -> bool:
@@ -130,7 +131,7 @@ class Account:
         rsp = await self.request("login/password", pms, "POST")
         tok = rsp.get("data", {}).get("token")
         if not tok:
-            _LOGGER.error("Login %s failed: %s", self.phone, [rsp, pms])
+            _LOGGER.error("Login %s failed: %s", self.phone, json.dumps([rsp, pms]))
             return False
         self._config.update(
             {
@@ -182,7 +183,7 @@ class Account:
         if not isinstance(dls, list):
             dls = []
         if not dls:
-            _LOGGER.warning("Got devices for %s failed: %s", self.phone, rsp)
+            _LOGGER.warning("Got devices for %s failed: %s", self.phone, json.dumps(rsp))
         return dls
 
     @staticmethod

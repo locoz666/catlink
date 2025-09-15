@@ -1,5 +1,6 @@
 """Device module for CatLink integration."""
 
+import json
 from typing import TYPE_CHECKING
 
 from ..const import _LOGGER
@@ -210,10 +211,10 @@ class Device:
         rdt = await self.account.request(api, pms, "POST")
         eno = rdt.get("returnCode", 0)
         if eno:
-            _LOGGER.error("Select mode failed: %s", [rdt, pms])
+            _LOGGER.error("Select mode failed: %s", json.dumps([rdt, pms]))
             return False
         await self.update_device_detail()
-        _LOGGER.info("Select mode: %s", [rdt, pms])
+        _LOGGER.info("Select mode: %s", json.dumps([rdt, pms]))
         return rdt
 
     async def select_action(self, action, **kwargs) -> bool:
@@ -234,10 +235,10 @@ class Device:
         rdt = await self.account.request(api, pms, "POST")
         eno = rdt.get("returnCode", 0)
         if eno:
-            _LOGGER.error("Select action failed: %s", [rdt, pms])
+            _LOGGER.error("Select action failed: %s", json.dumps([rdt, pms]))
             return False
         await self.update_device_detail()
-        _LOGGER.info("Select action: %s", [rdt, pms])
+        _LOGGER.info("Select action: %s", json.dumps([rdt, pms]))
         return rdt
 
     async def update_device_detail(self) -> dict:
@@ -254,7 +255,7 @@ class Device:
             rdt = {}
             _LOGGER.error("Got device detail for %s failed: %s", self.name, exc)
         if not rdt:
-            _LOGGER.warning("Got device detail for %s failed: %s", self.name, rsp)
+            _LOGGER.warning("Got device detail for %s failed: %s", self.name, json.dumps(rsp))
         self.detail = rdt
         self._handle_listeners()
         return rdt

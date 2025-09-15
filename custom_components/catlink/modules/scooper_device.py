@@ -2,6 +2,7 @@
 
 from collections import deque
 import datetime
+import json
 from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -278,7 +279,7 @@ class ScooperDevice(Device):
             rdt = {}
             _LOGGER.error("Got device logs for %s failed: %s", self.name, exc)
         if not rdt:
-            _LOGGER.warning("Got device logs for %s failed: %s", self.name, rsp)
+            _LOGGER.warning("Got device logs for %s failed: %s", self.name, json.dumps(rsp))
         self.logs = rdt
         self._handle_listeners()
         return rdt

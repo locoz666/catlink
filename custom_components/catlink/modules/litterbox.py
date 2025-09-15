@@ -2,6 +2,7 @@
 
 from collections import deque
 import datetime
+import json
 from typing import TYPE_CHECKING
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -380,7 +381,7 @@ class LitterBox(Device):
             rdt = {}
             _LOGGER.error("Got device logs for %s failed: %s", self.name, exc)
         if not rdt:
-            _LOGGER.warning("Got device logs for %s failed: %s", self.name, rsp)
+            _LOGGER.warning("Got device logs for %s failed: %s", self.name, json.dumps(rsp))
         self.logs = rdt
         self._handle_listeners()
         return rdt
@@ -403,10 +404,10 @@ class LitterBox(Device):
         rdt = await self.account.request(api, pms, "POST")
         eno = rdt.get("returnCode", 0)
         if eno:
-            _LOGGER.error("Select mode failed: %s", [rdt, pms])
+            _LOGGER.error("Select mode failed: %s", json.dumps([rdt, pms]))
             return False
         await self.update_device_detail()
-        _LOGGER.info("Select mode: %s", [rdt, pms])
+        _LOGGER.info("Select mode: %s", json.dumps([rdt, pms]))
         return rdt
 
     async def update_device_detail(self) -> dict:
@@ -423,7 +424,7 @@ class LitterBox(Device):
             rdt = {}
             _LOGGER.error("Got device detail for %s failed: %s", self.name, exc)
         if not rdt:
-            _LOGGER.warning("Got device detail for %s failed: %s", self.name, rsp)
+            _LOGGER.warning("Got device detail for %s failed: %s", self.name, json.dumps(rsp))
         self.detail = rdt
         self._handle_listeners()
         return rdt
@@ -448,10 +449,10 @@ class LitterBox(Device):
         rdt = await self.account.request(api, pms, "POST")
         eno = rdt.get("returnCode", 0)
         if eno:
-            _LOGGER.error("Select action failed: %s", [rdt, pms])
+            _LOGGER.error("Select action failed: %s", json.dumps([rdt, pms]))
             return False
         await self.update_device_detail()
-        _LOGGER.info("Select action: %s", [rdt, pms])
+        _LOGGER.info("Select action: %s", json.dumps([rdt, pms]))
         return rdt
 
     async def changeBag(self, mode, **kwargs) -> bool:
@@ -464,8 +465,8 @@ class LitterBox(Device):
         rdt = await self.account.request(api, pms, "POST")
         eno = rdt.get("returnCode", 0)
         if eno:
-            _LOGGER.error("Change bag failed: %s", [rdt, pms])
+            _LOGGER.error("Change bag failed: %s", json.dumps([rdt, pms]))
             return False
         await self.update_device_detail()
-        _LOGGER.info("Change bag: %s", [rdt, pms])
+        _LOGGER.info("Change bag: %s", json.dumps([rdt, pms]))
         return rdt

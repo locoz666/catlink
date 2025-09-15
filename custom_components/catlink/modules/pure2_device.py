@@ -1,6 +1,7 @@
 """Pure2 water fountain device class for CatLink integration."""
 
 import datetime
+import json
 from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -57,8 +58,8 @@ class Pure2Device(Device):
             rdt = {}
             _LOGGER.error("Got device detail for %s failed: %s", self.name, exc)
         if not rdt:
-            _LOGGER.warning("Got device detail for %s failed: %s", self.name, rsp)
-        _LOGGER.debug("Update device detail: %s", rsp)
+            _LOGGER.warning("Got device detail for %s failed: %s", self.name, json.dumps(rsp))
+        _LOGGER.debug("Update device detail: %s", json.dumps(rsp))
         self.detail = rdt
         self._handle_listeners()
         return rdt
@@ -77,8 +78,8 @@ class Pure2Device(Device):
             rdt = {}
             _LOGGER.warning("Got device logs for %s failed: %s", self.name, exc)
         if not rdt:
-            _LOGGER.debug("Got device logs for %s failed: %s", self.name, rsp)
-        _LOGGER.debug("Update device logs: %s", rsp)
+            _LOGGER.debug("Got device logs for %s failed: %s", self.name, json.dumps(rsp))
+        _LOGGER.debug("Update device logs: %s", json.dumps(rsp))
         self.logs = rdt
         self._handle_listeners()
         return rdt
@@ -93,10 +94,10 @@ class Pure2Device(Device):
         rdt = await self.account.request(api, pms, "POST")
         eno = rdt.get("returnCode", 0)
         if eno:
-            _LOGGER.error("Set run mode failed: %s", [rdt, pms])
+            _LOGGER.error("Set run mode failed: %s", json.dumps([rdt, pms]))
             return False
         await self.update_device_detail()
-        _LOGGER.info("Set run mode: %s", [rdt, pms])
+        _LOGGER.info("Set run mode: %s", json.dumps([rdt, pms]))
         return rdt
 
     @property
