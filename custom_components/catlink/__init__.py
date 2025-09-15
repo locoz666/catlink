@@ -148,7 +148,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     cfg = {**config_entry.data, **config_entry.options}
     acc = Account(hass, cfg)
     coordinator = DevicesCoordinator(acc)
-    
+
     try:
         await acc.async_check_auth()
         await coordinator.async_config_entry_first_refresh()
@@ -159,14 +159,23 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     # Store account and coordinator
     hass.data[DOMAIN][CONF_ACCOUNTS][acc.uid] = acc
     hass.data[DOMAIN]["coordinators"][coordinator.name] = coordinator
-    
+
     # Store config entry reference
     coordinator.config_entry = config_entry
 
     # Set up all platforms
     await hass.config_entries.async_forward_entry_setups(config_entry, SUPPORTED_DOMAINS)
 
+    # Register update listener for config changes
+    update_listener = config_entry.add_update_listener(async_update_options)
+    hass.data[DOMAIN].setdefault("update_listeners", {})[config_entry.entry_id] = update_listener
+
     return True
+
+
+async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+    """Update options for the config entry."""
+    await hass.config_entries.async_reload(config_entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -174,23 +183,28 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     unload_ok = await hass.config_entries.async_unload_platforms(
         config_entry, SUPPORTED_DOMAINS
     )
-    
+
     if unload_ok:
         # Clean up stored data
         cfg = {**config_entry.data, **config_entry.options}
-        phone = cfg.get("phone")
-        phone_iac = cfg.get("phone_iac", "86")
+        phone = cfg.get(CONF_PHONE) or cfg.get("phone")
+        phone_iac = cfg.get(CONF_PHONE_IAC) or cfg.get("phone_iac", "86")
         uid = f"{phone_iac}-{phone}"
-        
+
         hass.data[DOMAIN][CONF_ACCOUNTS].pop(uid, None)
-        
+
         # Clean up coordinators
         coordinators_to_remove = []
         for name, coordinator in hass.data[DOMAIN]["coordinators"].items():
             if coordinator.account.uid == uid:
                 coordinators_to_remove.append(name)
-        
+
         for name in coordinators_to_remove:
             hass.data[DOMAIN]["coordinators"].pop(name, None)
+
+        # Clean up update listener
+        update_listeners = hass.data[DOMAIN].get("update_listeners", {})
+        if config_entry.entry_id in update_listeners:
+            update_listeners.pop(config_entry.entry_id)
 
     return unload_ok

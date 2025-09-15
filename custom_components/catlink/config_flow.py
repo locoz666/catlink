@@ -169,10 +169,10 @@ class CatlinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             hours = seconds // 3600
             minutes = (seconds % 3600) // 60
             secs = seconds % 60
-            
+
             config_data = {
-                CONF_PHONE: self._user_input[CONF_PHONE],
-                CONF_PHONE_IAC: self._user_input[CONF_PHONE_IAC],
+                CONF_PHONE: str(self._user_input[CONF_PHONE]),
+                CONF_PHONE_IAC: str(self._user_input[CONF_PHONE_IAC]),
                 CONF_PASSWORD: self._user_input[CONF_PASSWORD],
                 CONF_API_BASE: SERVER_REGIONS[self._user_input["server_region"]],
                 CONF_LANGUAGE: self._user_input[CONF_LANGUAGE],
@@ -293,8 +293,8 @@ class CatlinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         
         # Prepare final configuration data
         config_data = {
-            CONF_PHONE: phone,
-            CONF_PHONE_IAC: phone_iac,
+            CONF_PHONE: str(phone),
+            CONF_PHONE_IAC: str(phone_iac),
             CONF_PASSWORD: password,
             CONF_API_BASE: api_base,
             CONF_LANGUAGE: import_data.get(CONF_LANGUAGE, "zh_CN"),
@@ -351,6 +351,8 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None) -> FlowResult:
         """Manage the options."""
+        errors = {}
+
         if user_input is not None:
             # Convert seconds back to HH:MM:SS format
             seconds = user_input.pop("scan_interval_seconds")
@@ -363,10 +365,18 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
             if "server_region" in user_input:
                 user_input[CONF_API_BASE] = SERVER_REGIONS[user_input.pop("server_region")]
 
+            # Ensure CONF_PHONE_IAC is always stored as string
+            if CONF_PHONE_IAC in user_input:
+                user_input[CONF_PHONE_IAC] = str(user_input[CONF_PHONE_IAC])
+
+            # Ensure CONF_PHONE is also stored as string
+            if CONF_PHONE in user_input:
+                user_input[CONF_PHONE] = str(user_input[CONF_PHONE])
+
             # Validate authentication if account details changed
             account_changed = (
-                user_input.get(CONF_PHONE) != self.config_entry.data.get(CONF_PHONE) or
-                user_input.get(CONF_PHONE_IAC) != self.config_entry.data.get(CONF_PHONE_IAC) or
+                user_input.get(CONF_PHONE) != str(self.config_entry.data.get(CONF_PHONE, "")) or
+                user_input.get(CONF_PHONE_IAC) != str(self.config_entry.data.get(CONF_PHONE_IAC, "86")) or
                 user_input.get(CONF_PASSWORD) != self.config_entry.data.get(CONF_PASSWORD) or
                 user_input.get(CONF_API_BASE) != self.config_entry.data.get(CONF_API_BASE)
             )
@@ -375,10 +385,19 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
                 try:
                     await self._validate_auth(user_input)
                 except (CannotConnect, InvalidAuth):
+                    errors["base"] = "invalid_auth"
+                    # Show form again with error but preserve user input
                     return self.async_show_form(
                         step_id="init",
-                        data_schema=self._get_options_schema(),
-                        errors={"base": "invalid_auth"}
+                        data_schema=self._get_options_schema(user_input),
+                        errors=errors
+                    )
+                except Exception:
+                    errors["base"] = "unknown"
+                    return self.async_show_form(
+                        step_id="init",
+                        data_schema=self._get_options_schema(user_input),
+                        errors=errors
                     )
 
             return self.async_create_entry(title="", data=user_input)
@@ -388,32 +407,42 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=self._get_options_schema(),
         )
 
-    def _get_options_schema(self):
+    def _get_options_schema(self, user_input=None):
         """Get the options schema with current values."""
+        # Use user_input if provided (for error recovery), otherwise use config entry data
+        if user_input is None:
+            user_input = {}
+
         # Get current configuration
-        current_scan_interval = self.config_entry.data.get(CONF_SCAN_INTERVAL, "00:01:00")
-        time_parts = current_scan_interval.split(":")
-        current_seconds = int(time_parts[0]) * 3600 + int(time_parts[1]) * 60 + int(time_parts[2])
+        current_scan_interval = user_input.get(CONF_SCAN_INTERVAL) or self.config_entry.data.get(CONF_SCAN_INTERVAL, "00:01:00")
+        if "scan_interval_seconds" in user_input:
+            current_seconds = user_input["scan_interval_seconds"]
+        else:
+            time_parts = current_scan_interval.split(":")
+            current_seconds = int(time_parts[0]) * 3600 + int(time_parts[1]) * 60 + int(time_parts[2])
 
         # Determine current server region from API base
-        current_api_base = self.config_entry.data.get(CONF_API_BASE, SERVER_REGIONS["china"])
-        current_region = "china"
-        for region, url in SERVER_REGIONS.items():
-            if url == current_api_base:
-                current_region = region
-                break
+        if "server_region" in user_input:
+            current_region = user_input["server_region"]
+        else:
+            current_api_base = user_input.get(CONF_API_BASE) or self.config_entry.data.get(CONF_API_BASE, SERVER_REGIONS["china"])
+            current_region = "china"
+            for region, url in SERVER_REGIONS.items():
+                if url == current_api_base:
+                    current_region = region
+                    break
 
         return vol.Schema(
             {
                 # Account settings
                 vol.Required(CONF_PHONE,
-                    default=self.config_entry.data.get(CONF_PHONE)
+                    default=user_input.get(CONF_PHONE) or self.config_entry.data.get(CONF_PHONE)
                 ): str,
                 vol.Required(CONF_PHONE_IAC,
-                    default=self.config_entry.data.get(CONF_PHONE_IAC, "86")
+                    default=str(user_input.get(CONF_PHONE_IAC) or self.config_entry.data.get(CONF_PHONE_IAC, "86"))
                 ): str,
                 vol.Required(CONF_PASSWORD,
-                    default=self.config_entry.data.get(CONF_PASSWORD)
+                    default=user_input.get(CONF_PASSWORD) or self.config_entry.data.get(CONF_PASSWORD)
                 ): str,
                 vol.Required("server_region", default=current_region): vol.In(SERVER_REGIONS.keys()),
 
@@ -422,26 +451,26 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
                     int, vol.Range(min=5, max=3600)
                 ),
                 vol.Required(CONF_LANGUAGE,
-                    default=self.config_entry.data.get(CONF_LANGUAGE, "zh_CN")
+                    default=user_input.get(CONF_LANGUAGE) or self.config_entry.data.get(CONF_LANGUAGE, "zh_CN")
                 ): vol.In(LANGUAGE_OPTIONS.keys()),
 
                 # Device-specific settings
                 vol.Optional("empty_weight",
-                    default=self.config_entry.data.get("empty_weight", 0.0)
+                    default=user_input.get("empty_weight", self.config_entry.data.get("empty_weight", 0.0))
                 ): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=10.0)),
                 vol.Optional("max_samples_litter",
-                    default=self.config_entry.data.get("max_samples_litter", 24)
+                    default=user_input.get("max_samples_litter", self.config_entry.data.get("max_samples_litter", 24))
                 ): vol.All(int, vol.Range(min=1, max=100)),
 
                 # Eating detection parameters
                 vol.Optional("stable_duration",
-                    default=self.config_entry.data.get("stable_duration", 60)
+                    default=user_input.get("stable_duration", self.config_entry.data.get("stable_duration", 60))
                 ): vol.All(int, vol.Range(min=10, max=300)),
                 vol.Optional("min_eating_amount",
-                    default=self.config_entry.data.get("min_eating_amount", 2)
+                    default=user_input.get("min_eating_amount", self.config_entry.data.get("min_eating_amount", 2))
                 ): vol.All(int, vol.Range(min=1, max=50)),
                 vol.Optional("spike_threshold",
-                    default=self.config_entry.data.get("spike_threshold", 100)
+                    default=user_input.get("spike_threshold", self.config_entry.data.get("spike_threshold", 100))
                 ): vol.All(int, vol.Range(min=50, max=500)),
             }
         )
