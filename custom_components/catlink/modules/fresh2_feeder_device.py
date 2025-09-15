@@ -436,15 +436,12 @@ class Fresh2FeederDevice(Device):
                 "state": self.last_log,
                 "state_attrs": self.last_log_attrs,
             },
-        }
-
-        # Only add error sensor if there's an error
-        if self.error:
-            sensors["error"] = {
+            "error": {
                 "icon": "mdi:alert-circle",
                 "state": self.error,
                 "state_attrs": self.error_attrs,
-            }
+            },
+        }
 
         return sensors
 
@@ -552,11 +549,7 @@ class Fresh2FeederDevice(Device):
                 "delay_update": 3,
                 "translation_key": "food_out_count",
             },
-        }
-
-        # Only add max_daily_food number in smart mode
-        if self.detail.get("currentModel", 0) == 0:
-            numbers["max_daily_food"] = {
+            "max_daily_food": {
                 "icon": "mdi:food-turkey",
                 "min": 0,
                 "max": 999,
@@ -565,7 +558,8 @@ class Fresh2FeederDevice(Device):
                 "async_set_value": self.set_max_daily_food,
                 "delay_update": 3,
                 "translation_key": "max_daily_food",
-            }
+            },
+        }
 
         return numbers
 
