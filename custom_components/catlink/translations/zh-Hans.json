@@ -36,11 +36,17 @@
         "description": "配置设备专用参数",
         "data": {
           "empty_weight": "空猫砂盆重量（公斤）",
-          "max_samples_litter": "猫砂重量采样数"
+          "max_samples_litter": "猫砂重量采样数",
+          "stable_duration": "稳定检测时长（秒）",
+          "min_eating_amount": "最小进食量（克）",
+          "spike_threshold": "峰值阈值（克）"
         },
         "data_description": {
           "empty_weight": "空猫砂盆的重量，用于精确计算猫砂剩余量",
-          "max_samples_litter": "用于判断猫是否在内的重量采样数量（1-100）"
+          "max_samples_litter": "用于判断猫是否在内的重量采样数量（1-100）",
+          "stable_duration": "判断猫咪进食状态稳定所需的时间（10-300秒）",
+          "min_eating_amount": "判定为有效进食的最小食物消耗量（1-50克）",
+          "spike_threshold": "检测异常数据峰值的阈值（50-500克）"
         }
       },
       "confirm": {
@@ -63,16 +69,26 @@
         "title": "CatLink 选项",
         "description": "更新您的 CatLink 集成设置",
         "data": {
+          "phone": "手机号",
+          "phone_iac": "国家代码",
+          "password": "密码",
+          "server_region": "服务器地区",
           "scan_interval_seconds": "更新间隔（秒）",
           "language": "语言",
           "empty_weight": "空猫砂盆重量（公斤）",
-          "max_samples_litter": "猫砂重量采样数"
+          "max_samples_litter": "猫砂重量采样数",
+          "stable_duration": "稳定检测时长（秒）",
+          "min_eating_amount": "最小进食量（克）",
+          "spike_threshold": "峰值阈值（克）"
         },
         "data_description": {
           "scan_interval_seconds": "设备数据更新频率（最低5秒，无上限）",
           "language": "集成界面语言",
           "empty_weight": "空猫砂盆重量，用于精确计算",
-          "max_samples_litter": "用于判断猫是否存在的采样数量"
+          "max_samples_litter": "用于判断猫是否存在的采样数量",
+          "stable_duration": "判断猫咪进食状态稳定所需的时间（10-300秒）",
+          "min_eating_amount": "判定为有效进食的最小食物消耗量（1-50克）",
+          "spike_threshold": "检测异常数据峰值的阈值（50-500克）"
         }
       }
     }

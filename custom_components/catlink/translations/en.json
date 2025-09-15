@@ -36,11 +36,17 @@
         "description": "Configure device-specific parameters",
         "data": {
           "empty_weight": "Empty Litter Box Weight (kg)",
-          "max_samples_litter": "Litter Weight Sample Count"
+          "max_samples_litter": "Litter Weight Sample Count",
+          "stable_duration": "Stable Duration (seconds)",
+          "min_eating_amount": "Minimum Eating Amount (grams)",
+          "spike_threshold": "Spike Threshold (grams)"
         },
         "data_description": {
           "empty_weight": "Weight of empty litter box for accurate litter level calculation",
-          "max_samples_litter": "Number of weight samples to determine if cat is present (1-100)"
+          "max_samples_litter": "Number of weight samples to determine if cat is present (1-100)",
+          "stable_duration": "Time required to determine stable eating state (10-300 seconds)",
+          "min_eating_amount": "Minimum food consumption to be considered valid eating (1-50 grams)",
+          "spike_threshold": "Threshold for detecting abnormal data spikes (50-500 grams)"
         }
       },
       "confirm": {
@@ -63,16 +69,26 @@
         "title": "CatLink Options",
         "description": "Update your CatLink integration settings",
         "data": {
+          "phone": "Phone Number",
+          "phone_iac": "Country Code",
+          "password": "Password",
+          "server_region": "Server Region",
           "scan_interval_seconds": "Update Interval (seconds)",
           "language": "Language",
           "empty_weight": "Empty Litter Box Weight (kg)",
-          "max_samples_litter": "Litter Weight Sample Count"
+          "max_samples_litter": "Litter Weight Sample Count",
+          "stable_duration": "Stable Duration (seconds)",
+          "min_eating_amount": "Minimum Eating Amount (grams)",
+          "spike_threshold": "Spike Threshold (grams)"
         },
         "data_description": {
           "scan_interval_seconds": "How often to update device data (minimum 5 seconds, no maximum limit)",
           "language": "Interface language for the integration",
           "empty_weight": "Weight of empty litter box for accurate calculation",
-          "max_samples_litter": "Number of weight samples to determine cat presence"
+          "max_samples_litter": "Number of weight samples to determine cat presence",
+          "stable_duration": "Time required to determine stable eating state (10-300 seconds)",
+          "min_eating_amount": "Minimum food consumption to be considered valid eating (1-50 grams)",
+          "spike_threshold": "Threshold for detecting abnormal data spikes (50-500 grams)"
         }
       }
     }

@@ -19,13 +19,62 @@ class CatlinkEntity(CoordinatorEntity):
         self._name = name
         self._device = device
         self._option = option or {}
-        
+
         # Enable i18n support
         self._attr_has_entity_name = True
         self._attr_translation_key = name.lower().replace(" ", "_")
-        
-        # Keep English name as fallback for translation system
-        self._attr_name = name
+
+        # Load translation based on account language
+        language = self.account.cfg.get('language', 'en_GB')
+
+        # Load appropriate translation file
+        import json
+        import os
+        translations_path = os.path.join(
+            os.path.dirname(__file__),
+            '..',
+            'translations',
+            'zh-Hans.json' if language == 'zh_CN' else 'en.json'
+        )
+
+        try:
+            with open(translations_path, 'r', encoding='utf-8') as f:
+                translations = json.load(f)
+
+            # Get entity type from module name
+            module_parts = self.__class__.__module__.split('.')
+            if 'sensor' in module_parts:
+                entity_type = 'sensor'
+            elif 'binary_sensor' in module_parts:
+                entity_type = 'binary_sensor'
+            elif 'switch' in module_parts:
+                entity_type = 'switch'
+            elif 'select' in module_parts:
+                entity_type = 'select'
+            elif 'button' in module_parts:
+                entity_type = 'button'
+            elif 'number' in module_parts:
+                entity_type = 'number'
+            else:
+                entity_type = None
+
+            # Try to get translated name
+            if entity_type:
+                translation_key = name.lower().replace(" ", "_")
+                translated_name = translations.get('entity', {}).get(entity_type, {}).get(translation_key, {}).get('name')
+
+                if translated_name:
+                    self._attr_name = translated_name
+                else:
+                    # Fallback: format the key name nicely
+                    self._attr_name = name.replace('_', ' ').title()
+            else:
+                self._attr_name = name.replace('_', ' ').title()
+        except Exception as e:
+            _LOGGER.debug("Failed to load translation for %s: %s", name, e)
+            # Fallback to formatted English name
+            self._attr_name = name.replace('_', ' ').title()
+
         self._attr_device_id = f"{device.type}_{device.mac}"
         self._attr_unique_id = f"{self._attr_device_id}-{name}"
         self._attr_icon = self._option.get("icon")
