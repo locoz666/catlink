@@ -58,6 +58,9 @@ class DevicesCoordinator(DataUpdateCoordinator):
                     mac=dat.get("mac", ""),
                     empty_weight=cfg_data.get("empty_weight", 0.0),
                     max_samples_litter=cfg_data.get("max_samples_litter", 24),
+                    stable_duration=cfg_data.get("stable_duration", 60),
+                    min_eating_amount=cfg_data.get("min_eating_amount", 2),
+                    spike_threshold=cfg_data.get("spike_threshold", 100),
                 )
             did = dat.get("id")
             if not did:

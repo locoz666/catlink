@@ -143,6 +143,16 @@ class CatlinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional("max_samples_litter", default=24): vol.All(
                     int, vol.Range(min=1, max=100)
                 ),
+                # Eating detection parameters
+                vol.Optional("stable_duration", default=60): vol.All(
+                    int, vol.Range(min=10, max=300)
+                ),
+                vol.Optional("min_eating_amount", default=2): vol.All(
+                    int, vol.Range(min=1, max=50)
+                ),
+                vol.Optional("spike_threshold", default=100): vol.All(
+                    int, vol.Range(min=50, max=500)
+                ),
             }
         )
 
@@ -172,6 +182,9 @@ class CatlinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if "empty_weight" in self._user_input:
                 config_data["empty_weight"] = self._user_input["empty_weight"]
                 config_data["max_samples_litter"] = self._user_input["max_samples_litter"]
+                config_data["stable_duration"] = self._user_input.get("stable_duration", 60)
+                config_data["min_eating_amount"] = self._user_input.get("min_eating_amount", 2)
+                config_data["spike_threshold"] = self._user_input.get("spike_threshold", 100)
 
             unique_id = f"{self._user_input[CONF_PHONE_IAC]}-{self._user_input[CONF_PHONE]}"
             await self.async_set_unique_id(unique_id)
@@ -204,6 +217,9 @@ class CatlinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             config_summary.extend([
                 f"Empty Litter Box Weight: {self._user_input['empty_weight']} kg",
                 f"Litter Sample Count: {self._user_input['max_samples_litter']}",
+                f"Stable Duration: {self._user_input.get('stable_duration', 60)} seconds",
+                f"Min Eating Amount: {self._user_input.get('min_eating_amount', 2)} grams",
+                f"Spike Threshold: {self._user_input.get('spike_threshold', 100)} grams",
             ])
 
         return self.async_show_form(
@@ -301,6 +317,12 @@ class CatlinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             config_data["empty_weight"] = import_data["empty_weight"]
         if "max_samples_litter" in import_data:
             config_data["max_samples_litter"] = import_data["max_samples_litter"]
+        if "stable_duration" in import_data:
+            config_data["stable_duration"] = import_data["stable_duration"]
+        if "min_eating_amount" in import_data:
+            config_data["min_eating_amount"] = import_data["min_eating_amount"]
+        if "spike_threshold" in import_data:
+            config_data["spike_threshold"] = import_data["spike_threshold"]
         
         # Create the config entry
         title = f"CatLink ({phone}) - Migrated from YAML"
@@ -331,40 +353,116 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
         """Manage the options."""
         if user_input is not None:
             # Convert seconds back to HH:MM:SS format
-            seconds = user_input["scan_interval_seconds"]
+            seconds = user_input.pop("scan_interval_seconds")
             hours = seconds // 3600
             minutes = (seconds % 3600) // 60
             secs = seconds % 60
             user_input[CONF_SCAN_INTERVAL] = f"{hours:02d}:{minutes:02d}:{secs:02d}"
-            
-            return self.async_create_entry(title="", data=user_input)
 
-        # Get current configuration and convert to seconds
-        current_scan_interval = self.config_entry.data.get(CONF_SCAN_INTERVAL, "00:01:00")
-        time_parts = current_scan_interval.split(":")
-        current_seconds = int(time_parts[0]) * 3600 + int(time_parts[1]) * 60 + int(time_parts[2])
-        
-        options_schema = vol.Schema(
-            {
-                vol.Required("scan_interval_seconds", default=current_seconds): vol.All(
-                    int, vol.Range(min=5)
-                ),
-                vol.Required(CONF_LANGUAGE, 
-                    default=self.config_entry.data.get(CONF_LANGUAGE, "zh_CN")
-                ): vol.In(LANGUAGE_OPTIONS.keys()),
-                vol.Optional("empty_weight", 
-                    default=self.config_entry.data.get("empty_weight", 0.0)
-                ): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=10.0)),
-                vol.Optional("max_samples_litter", 
-                    default=self.config_entry.data.get("max_samples_litter", 24)
-                ): vol.All(int, vol.Range(min=1, max=100)),
-            }
-        )
+            # Handle server region conversion
+            if "server_region" in user_input:
+                user_input[CONF_API_BASE] = SERVER_REGIONS[user_input.pop("server_region")]
+
+            # Validate authentication if account details changed
+            account_changed = (
+                user_input.get(CONF_PHONE) != self.config_entry.data.get(CONF_PHONE) or
+                user_input.get(CONF_PHONE_IAC) != self.config_entry.data.get(CONF_PHONE_IAC) or
+                user_input.get(CONF_PASSWORD) != self.config_entry.data.get(CONF_PASSWORD) or
+                user_input.get(CONF_API_BASE) != self.config_entry.data.get(CONF_API_BASE)
+            )
+
+            if account_changed:
+                try:
+                    await self._validate_auth(user_input)
+                except (CannotConnect, InvalidAuth):
+                    return self.async_show_form(
+                        step_id="init",
+                        data_schema=self._get_options_schema(),
+                        errors={"base": "invalid_auth"}
+                    )
+
+            return self.async_create_entry(title="", data=user_input)
 
         return self.async_show_form(
             step_id="init",
-            data_schema=options_schema,
+            data_schema=self._get_options_schema(),
         )
+
+    def _get_options_schema(self):
+        """Get the options schema with current values."""
+        # Get current configuration
+        current_scan_interval = self.config_entry.data.get(CONF_SCAN_INTERVAL, "00:01:00")
+        time_parts = current_scan_interval.split(":")
+        current_seconds = int(time_parts[0]) * 3600 + int(time_parts[1]) * 60 + int(time_parts[2])
+
+        # Determine current server region from API base
+        current_api_base = self.config_entry.data.get(CONF_API_BASE, SERVER_REGIONS["china"])
+        current_region = "china"
+        for region, url in SERVER_REGIONS.items():
+            if url == current_api_base:
+                current_region = region
+                break
+
+        return vol.Schema(
+            {
+                # Account settings
+                vol.Required(CONF_PHONE,
+                    default=self.config_entry.data.get(CONF_PHONE)
+                ): str,
+                vol.Required(CONF_PHONE_IAC,
+                    default=self.config_entry.data.get(CONF_PHONE_IAC, "86")
+                ): str,
+                vol.Required(CONF_PASSWORD,
+                    default=self.config_entry.data.get(CONF_PASSWORD)
+                ): str,
+                vol.Required("server_region", default=current_region): vol.In(SERVER_REGIONS.keys()),
+
+                # General settings
+                vol.Required("scan_interval_seconds", default=current_seconds): vol.All(
+                    int, vol.Range(min=5, max=3600)
+                ),
+                vol.Required(CONF_LANGUAGE,
+                    default=self.config_entry.data.get(CONF_LANGUAGE, "zh_CN")
+                ): vol.In(LANGUAGE_OPTIONS.keys()),
+
+                # Device-specific settings
+                vol.Optional("empty_weight",
+                    default=self.config_entry.data.get("empty_weight", 0.0)
+                ): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=10.0)),
+                vol.Optional("max_samples_litter",
+                    default=self.config_entry.data.get("max_samples_litter", 24)
+                ): vol.All(int, vol.Range(min=1, max=100)),
+
+                # Eating detection parameters
+                vol.Optional("stable_duration",
+                    default=self.config_entry.data.get("stable_duration", 60)
+                ): vol.All(int, vol.Range(min=10, max=300)),
+                vol.Optional("min_eating_amount",
+                    default=self.config_entry.data.get("min_eating_amount", 2)
+                ): vol.All(int, vol.Range(min=1, max=50)),
+                vol.Optional("spike_threshold",
+                    default=self.config_entry.data.get("spike_threshold", 100)
+                ): vol.All(int, vol.Range(min=50, max=500)),
+            }
+        )
+
+    async def _validate_auth(self, user_input):
+        """Validate the user authentication."""
+        config = {
+            CONF_PHONE: user_input.get(CONF_PHONE),
+            CONF_PHONE_IAC: user_input.get(CONF_PHONE_IAC),
+            CONF_PASSWORD: user_input.get(CONF_PASSWORD),
+            CONF_API_BASE: user_input.get(CONF_API_BASE),
+            CONF_LANGUAGE: user_input.get(CONF_LANGUAGE, "zh_CN"),
+        }
+
+        account = Account(self.hass, config)
+
+        success = await account.async_login()
+        if not success:
+            raise InvalidAuth
+
+        return True
 
 
 class CannotConnect(HomeAssistantError):
