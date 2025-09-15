@@ -373,12 +373,15 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
             if CONF_PHONE in user_input:
                 user_input[CONF_PHONE] = str(user_input[CONF_PHONE])
 
+            # Merge current config for comparison
+            current_config = {**self.config_entry.data, **self.config_entry.options}
+
             # Validate authentication if account details changed
             account_changed = (
-                user_input.get(CONF_PHONE) != str(self.config_entry.data.get(CONF_PHONE, "")) or
-                user_input.get(CONF_PHONE_IAC) != str(self.config_entry.data.get(CONF_PHONE_IAC, "86")) or
-                user_input.get(CONF_PASSWORD) != self.config_entry.data.get(CONF_PASSWORD) or
-                user_input.get(CONF_API_BASE) != self.config_entry.data.get(CONF_API_BASE)
+                user_input.get(CONF_PHONE) != str(current_config.get(CONF_PHONE, "")) or
+                user_input.get(CONF_PHONE_IAC) != str(current_config.get(CONF_PHONE_IAC, "86")) or
+                user_input.get(CONF_PASSWORD) != current_config.get(CONF_PASSWORD) or
+                user_input.get(CONF_API_BASE) != current_config.get(CONF_API_BASE)
             )
 
             if account_changed:
@@ -413,8 +416,11 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is None:
             user_input = {}
 
+        # Merge data and options to get current configuration
+        current_config = {**self.config_entry.data, **self.config_entry.options}
+
         # Get current configuration
-        current_scan_interval = user_input.get(CONF_SCAN_INTERVAL) or self.config_entry.data.get(CONF_SCAN_INTERVAL, "00:01:00")
+        current_scan_interval = user_input.get(CONF_SCAN_INTERVAL) or current_config.get(CONF_SCAN_INTERVAL, "00:01:00")
         if "scan_interval_seconds" in user_input:
             current_seconds = user_input["scan_interval_seconds"]
         else:
@@ -425,7 +431,7 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
         if "server_region" in user_input:
             current_region = user_input["server_region"]
         else:
-            current_api_base = user_input.get(CONF_API_BASE) or self.config_entry.data.get(CONF_API_BASE, SERVER_REGIONS["china"])
+            current_api_base = user_input.get(CONF_API_BASE) or current_config.get(CONF_API_BASE, SERVER_REGIONS["china"])
             current_region = "china"
             for region, url in SERVER_REGIONS.items():
                 if url == current_api_base:
@@ -436,13 +442,13 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
             {
                 # Account settings
                 vol.Required(CONF_PHONE,
-                    default=user_input.get(CONF_PHONE) or self.config_entry.data.get(CONF_PHONE)
+                    default=user_input.get(CONF_PHONE) or current_config.get(CONF_PHONE)
                 ): str,
                 vol.Required(CONF_PHONE_IAC,
-                    default=str(user_input.get(CONF_PHONE_IAC) or self.config_entry.data.get(CONF_PHONE_IAC, "86"))
+                    default=str(user_input.get(CONF_PHONE_IAC) or current_config.get(CONF_PHONE_IAC, "86"))
                 ): str,
                 vol.Required(CONF_PASSWORD,
-                    default=user_input.get(CONF_PASSWORD) or self.config_entry.data.get(CONF_PASSWORD)
+                    default=user_input.get(CONF_PASSWORD) or current_config.get(CONF_PASSWORD)
                 ): str,
                 vol.Required("server_region", default=current_region): vol.In(SERVER_REGIONS.keys()),
 
@@ -451,26 +457,26 @@ class CatlinkOptionsFlowHandler(config_entries.OptionsFlow):
                     int, vol.Range(min=5, max=3600)
                 ),
                 vol.Required(CONF_LANGUAGE,
-                    default=user_input.get(CONF_LANGUAGE) or self.config_entry.data.get(CONF_LANGUAGE, "zh_CN")
+                    default=user_input.get(CONF_LANGUAGE) or current_config.get(CONF_LANGUAGE, "zh_CN")
                 ): vol.In(LANGUAGE_OPTIONS.keys()),
 
                 # Device-specific settings
                 vol.Optional("empty_weight",
-                    default=user_input.get("empty_weight", self.config_entry.data.get("empty_weight", 0.0))
+                    default=user_input.get("empty_weight", current_config.get("empty_weight", 0.0))
                 ): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=10.0)),
                 vol.Optional("max_samples_litter",
-                    default=user_input.get("max_samples_litter", self.config_entry.data.get("max_samples_litter", 24))
+                    default=user_input.get("max_samples_litter", current_config.get("max_samples_litter", 24))
                 ): vol.All(int, vol.Range(min=1, max=100)),
 
                 # Eating detection parameters
                 vol.Optional("stable_duration",
-                    default=user_input.get("stable_duration", self.config_entry.data.get("stable_duration", 60))
+                    default=user_input.get("stable_duration", current_config.get("stable_duration", 60))
                 ): vol.All(int, vol.Range(min=10, max=300)),
                 vol.Optional("min_eating_amount",
-                    default=user_input.get("min_eating_amount", self.config_entry.data.get("min_eating_amount", 2))
+                    default=user_input.get("min_eating_amount", current_config.get("min_eating_amount", 2))
                 ): vol.All(int, vol.Range(min=1, max=50)),
                 vol.Optional("spike_threshold",
-                    default=user_input.get("spike_threshold", self.config_entry.data.get("spike_threshold", 100))
+                    default=user_input.get("spike_threshold", current_config.get("spike_threshold", 100))
                 ): vol.All(int, vol.Range(min=50, max=500)),
             }
         )
