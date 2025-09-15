@@ -25,7 +25,7 @@ class CatlinkEntity(CoordinatorEntity):
         self._attr_translation_key = name.lower().replace(" ", "_")
 
         # Load translation based on account language
-        language = self.account.cfg.get('language', 'en_GB')
+        language = self.account.get_config('language', 'en_GB')
 
         # Load appropriate translation file
         import json
