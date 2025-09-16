@@ -58,10 +58,10 @@ async def async_setup_platform(
                 migrated_count += 1
                 break
     
-    # If all accounts have been migrated, skip YAML setup
-    if yaml_accounts and migrated_count == len(yaml_accounts):
+    # If no YAML accounts exist or all have been migrated, skip YAML setup
+    if not yaml_accounts or migrated_count == len(yaml_accounts):
         from .const import _LOGGER
-        _LOGGER.debug("All YAML accounts migrated to config entries, skipping YAML %s platform setup", ENTITY_DOMAIN)
+        _LOGGER.debug("No YAML accounts or all migrated to config entries, skipping YAML %s platform setup", ENTITY_DOMAIN)
         return
     
     hass.data[DOMAIN]["add_entities"][ENTITY_DOMAIN] = async_add_entities
