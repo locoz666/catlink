@@ -84,8 +84,8 @@
         "data_description": {
           "scan_interval_seconds": "设备数据更新频率（最低5秒，无上限）",
           "language": "集成界面语言",
-          "empty_weight": "空猫砂盆重量，用于精确计算",
-          "max_samples_litter": "用于判断猫是否存在的采样数量",
+          "empty_weight": "空猫砂盆重量，用于精确计算猫砂剩余量",
+          "max_samples_litter": "用于判断猫是否在内的重量采样数量",
           "stable_duration": "判断猫咪进食状态稳定所需的时间（10-300秒）",
           "min_eating_amount": "判定为有效进食的最小食物消耗量（1-50克）",
           "spike_threshold": "检测异常数据峰值的阈值（50-500克）"
@@ -120,7 +120,7 @@
     },
     "action": {
       "options": {
-        "Cleaning": "清理中",
+        "Cleaning": "清理",
         "Pause": "暂停"
       }
     },
@@ -189,7 +189,7 @@
         "name": "错误信息"
       },
       "last_log": {
-        "name": "最后日志"
+        "name": "最新日志"
       },
       "litter_weight": {
         "name": "猫砂重量"
@@ -240,13 +240,13 @@
         "name": "干燥剂倒计时"
       },
       "total_balance_desc": {
-        "name": "余粮描述"
+        "name": "余粮状态"
       },
       "food_out_count": {
         "name": "出粮份数"
       },
       "max_daily_food": {
-        "name": "每日最大出粮"
+        "name": "每日最大出粮份数"
       },
       "water_level": {
         "name": "水位"
@@ -335,7 +335,7 @@
     },
     "button": {
       "feed": {
-        "name": "手动喂食"
+        "name": "立即出粮"
       }
     },
     "number": {
