@@ -80,7 +80,7 @@ class CatlinkEntity(CoordinatorEntity):
         self._attr_icon = self._option.get("icon")
         self._attr_device_class = self._option.get("class")
         self._attr_unit_of_measurement = self._option.get("unit")
-        self._attr_state_class = option.get("state_class")
+        self._attr_state_class = self._option.get("state_class")
         
         # Build device information
         device_info = {
