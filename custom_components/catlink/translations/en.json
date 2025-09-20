@@ -305,6 +305,11 @@
         "Pause": "Pause"
       }
     },
+    "error": {
+      "options": {
+        "Normal Operation": "Normal Operation"
+      }
+    },
     "garbage": {
       "options": {
         "Change Bag": "Change Bag",

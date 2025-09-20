@@ -124,6 +124,11 @@
         "Pause": "暂停"
       }
     },
+    "error": {
+      "options": {
+        "Normal Operation": "正常运行"
+      }
+    },
     "garbage": {
       "options": {
         "Change Bag": "更换垃圾袋",

@@ -5,6 +5,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from ..const import _LOGGER, DOMAIN
+from ..localization import TranslationManager
 from ..modules.device import Device
 
 
@@ -19,76 +20,47 @@ class CatlinkEntity(CoordinatorEntity):
         self._name = name
         self._device = device
         self._option = option or {}
+        self._native_state = None
 
         # Enable i18n support
         self._attr_has_entity_name = True
         self._attr_translation_key = name.lower().replace(" ", "_")
 
         # Load translation based on account language
-        language = self.account.get_config('language', 'en_GB')
+        language = self.account.get_config("language", "en_GB")
+        self._translation_manager = TranslationManager(language)
 
-        # Load appropriate translation file
-        import json
-        import os
-        translations_path = os.path.join(
-            os.path.dirname(__file__),
-            '..',
-            'translations',
-            'zh-Hans.json' if language == 'zh_CN' else 'en.json'
+        entity_type = self._resolve_entity_type()
+        translation_key = self._attr_translation_key
+        translated_name = self._translation_manager.translate_entity_name(
+            entity_type, translation_key
         )
+        if translated_name:
+            self._attr_name = translated_name
+        else:
+            # Fallback: format the key name nicely
+            self._attr_name = name.replace("_", " ").title()
 
-        try:
-            with open(translations_path, 'r', encoding='utf-8') as f:
-                translations = json.load(f)
-
-            # Get entity type from module name
-            module_parts = self.__class__.__module__.split('.')
-            if 'sensor' in module_parts:
-                entity_type = 'sensor'
-            elif 'binary_sensor' in module_parts:
-                entity_type = 'binary_sensor'
-            elif 'switch' in module_parts:
-                entity_type = 'switch'
-            elif 'select' in module_parts:
-                entity_type = 'select'
-            elif 'button' in module_parts:
-                entity_type = 'button'
-            elif 'number' in module_parts:
-                entity_type = 'number'
-            else:
-                entity_type = None
-
-            # Try to get translated name
-            if entity_type:
-                translation_key = name.lower().replace(" ", "_")
-                translated_name = translations.get('entity', {}).get(entity_type, {}).get(translation_key, {}).get('name')
-
-                if translated_name:
-                    self._attr_name = translated_name
-                else:
-                    # Fallback: format the key name nicely
-                    self._attr_name = name.replace('_', ' ').title()
-            else:
-                self._attr_name = name.replace('_', ' ').title()
-        except Exception as e:
-            _LOGGER.debug("Failed to load translation for %s: %s", name, e)
-            # Fallback to formatted English name
-            self._attr_name = name.replace('_', ' ').title()
+        # Translation key to use for state values
+        self._value_translation_key = self._option.get(
+            "value_translation_key", self._attr_translation_key
+        )
 
         self._attr_device_id = f"{device.type}_{device.mac}"
         self._attr_unique_id = f"{self._attr_device_id}-{name}"
         self._attr_icon = self._option.get("icon")
         self._attr_device_class = self._option.get("class")
         self._attr_unit_of_measurement = self._option.get("unit")
-        self._attr_state_class = option.get("state_class")
-        
+        self._attr_state_class = self._option.get("state_class")
+
         # Build device information
         device_info = {
             "identifiers": {(DOMAIN, self._attr_device_id)},
-            "name": device.name or f"{device.type} {device.mac[-4:] if device.mac else device.id}",
+            "name": device.name
+            or f"{device.type} {device.mac[-4:] if device.mac else device.id}",
             "manufacturer": "CatLink",
         }
-        
+
         # Add optional device information
         if device.model:
             device_info["model"] = device.model
@@ -96,32 +68,32 @@ class CatlinkEntity(CoordinatorEntity):
             device_info["sw_version"] = device.detail.get("firmwareVersion")
         if device.mac:
             device_info["connections"] = {("mac", device.mac)}
-        
+
         # Set proper configuration URL to avoid API URL being shown
         device_info["configuration_url"] = "https://catlinks.cn/"
-            
+
         self._attr_device_info = DeviceInfo(**device_info)
-        
+
         # Debug logging
         _LOGGER.debug(
-            "Creating entity '%s' for device '%s' (ID: %s, MAC: %s)", 
-            self._attr_unique_id, 
-            device.name, 
-            device.id, 
-            device.mac
+            "Creating entity '%s' for device '%s' (ID: %s, MAC: %s)",
+            self._attr_unique_id,
+            device.name,
+            device.id,
+            device.mac,
         )
 
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added to hass."""
         await super().async_added_to_hass()
-        
+
         # Debug logging: Entity added to HA
         _LOGGER.debug(
-            "Entity '%s' added to Home Assistant with device_info: %s", 
-            self.entity_id, 
-            self._attr_device_info
+            "Entity '%s' added to Home Assistant with device_info: %s",
+            self.entity_id,
+            self._attr_device_info,
         )
-        
+
         self._device.listeners[self.entity_id] = self._handle_coordinator_update
         self._handle_coordinator_update()
 
@@ -129,12 +101,34 @@ class CatlinkEntity(CoordinatorEntity):
         self.update()
         self.async_write_ha_state()
 
+    def _resolve_entity_type(self) -> str | None:
+        """Determine the entity type for translation purposes."""
+        module_parts = self.__class__.__module__.split(".")
+        for entity_type in (
+            "sensor",
+            "binary_sensor",
+            "switch",
+            "select",
+            "button",
+            "number",
+        ):
+            if entity_type in module_parts:
+                return entity_type
+        return None
+
     def update(self) -> None:
         """Update the entity."""
         if hasattr(self._device, self._name):
-            self._attr_state = getattr(self._device, self._name)
+            self._native_state = getattr(self._device, self._name)
+            translation_key = getattr(
+                self, "_value_translation_key", self._attr_translation_key
+            )
+            self._attr_state = self._translation_manager.translate_state(
+                translation_key, self._native_state
+            )
             _LOGGER.debug(
-                "Entity update: %s", [self.entity_id, self._name, self._attr_state]
+                "Entity update: %s",
+                [self.entity_id, self._name, self._native_state],
             )
 
         fun = self._option.get("state_attrs")
