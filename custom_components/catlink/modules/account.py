@@ -55,8 +55,12 @@ class Account:
     def password(self) -> str:
         """Return the password of the account."""
         pwd = self._config.get(CONF_PASSWORD)
+        if not isinstance(pwd, str):
+            return ""
+
         if len(pwd) <= 16:
-            pwd = self.encrypt_password(pwd)
+            return self.encrypt_password(pwd)
+
         return pwd
 
     @property
