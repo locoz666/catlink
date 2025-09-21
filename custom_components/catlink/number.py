@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .entitites import CatlinkEntity
+from .entities import CatlinkEntity
 from .helpers import Helper
 from .modules.device import Device
 

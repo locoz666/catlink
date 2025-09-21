@@ -59,7 +59,7 @@ Updated all platform files to support both config entry and YAML configuration:
 - Maintained backward compatibility with YAML configuration
 - Enhanced error handling and logging
 
-#### Entity Base Class (`entitites/catlink.py`)
+#### Entity Base Class (`entities/catlink.py`)
 - **Removed manual entity_id assignment** (key fix for device registry)
 - Enhanced device_info with additional metadata
 - Added MAC address connections
